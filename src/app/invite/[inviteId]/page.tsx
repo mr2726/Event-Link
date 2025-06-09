@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, serverTimestamp, updateDoc, increment } from 'firebase/firestore';
 import { useParams, notFound } from 'next/navigation';
 
 import WeddingInvitePreview from '@/components/create/templates/WeddingInvitePreview';
@@ -18,8 +18,19 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+
+interface EventDataFromFirestore {
+  templateId: string;
+  eventDetails: EventDetailsFormData;
+  planId: string;
+  planName: string;
+  planMaxVisits: number | null;
+  visitCount: number;
+  // other fields like createdAt, eventId
+}
+
 
 const renderInviteTemplate = (templateId: string, eventDetails: EventDetailsFormData, isFullPage: boolean = true) => {
   const dummyTemplate: Template = { 
@@ -54,7 +65,7 @@ export default function InvitePage() {
   const params = useParams();
   const inviteId = params.inviteId as string;
 
-  const [eventData, setEventData] = useState<any | null>(null);
+  const [eventData, setEventData] = useState<EventDataFromFirestore | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -72,29 +83,55 @@ export default function InvitePage() {
       return;
     }
 
-    const fetchEventData = async () => {
+    const fetchEventDataAndTrackVisit = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const docRef = doc(db, "invites", inviteId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          const data = docSnap.data();
-          setEventData(data);
+          const data = docSnap.data() as EventDataFromFirestore;
+          
+          const storageKey = `eventlink_visited_${inviteId}`;
+          const hasVisitedBefore = localStorage.getItem(storageKey) === 'true';
+
+          let currentVisitCount = data.visitCount || 0;
+
+          if (!hasVisitedBefore) {
+            // New visitor
+            if (data.planMaxVisits !== null && currentVisitCount >= data.planMaxVisits) {
+              setError("This invitation has reached its view limit and is no longer available.");
+              setEventData(null); // Ensure invite doesn't render
+              setLoading(false);
+              return; // Stop processing
+            }
+            
+            // If not over limit, or unlimited plan, count this new visit
+            localStorage.setItem(storageKey, 'true');
+            await updateDoc(docRef, {
+              visitCount: increment(1)
+            });
+            currentVisitCount++; // Optimistically update for current view
+          }
+          
+          setEventData({ ...data, visitCount: currentVisitCount });
           if (data?.eventDetails?.eventName) {
             document.title = `${data.eventDetails.eventName} - EventLink Invitation`;
           }
+
         } else {
           setError("Invite not found.");
         }
       } catch (e) {
-        console.error("Error fetching event data:", e);
+        console.error("Error fetching event data or tracking visit:", e);
         setError("Failed to load event details.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchEventData();
+    fetchEventDataAndTrackVisit();
   }, [inviteId]);
 
   const handleRsvpSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -107,7 +144,7 @@ export default function InvitePage() {
       await addDoc(responsesCollectionRef, {
         name: rsvpName,
         email: rsvpEmail,
-        customAnswer: rsvpCustomAnswer || "", // Ensure empty string if not provided
+        customAnswer: rsvpCustomAnswer || "",
         submittedAt: serverTimestamp(),
       });
       setRsvpSubmitted(true);
@@ -136,11 +173,17 @@ export default function InvitePage() {
     );
   }
 
-  if (error || !eventData) {
+  if (error || !eventData) { // !eventData check ensures that if limit is reached, normal content doesn't show
      return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
-            <h1 className="text-3xl font-bold text-primary mb-4">Error</h1>
-            <p className="text-muted-foreground">{error || "Invite data could not be loaded."}</p>
+        <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4 text-center">
+            <AlertTriangle className="h-16 w-16 text-destructive mb-4" />
+            <h1 className="text-3xl font-bold text-primary mb-2">Access Denied</h1>
+            <p className="text-muted-foreground max-w-md">
+                {error || "This invitation could not be loaded. It may have reached its view limit or is no longer available."}
+            </p>
+             <Button variant="outline" asChild className="mt-6">
+                <Link href="/">Go to Homepage</Link>
+            </Button>
         </div>
     );
   }
@@ -148,9 +191,11 @@ export default function InvitePage() {
   const templateId = eventData?.templateId as string;
   const eventDetails = eventData?.eventDetails as EventDetailsFormData;
 
+   // This check is technically redundant due to the one above, but good for safety.
   if (!templateId || !eventDetails) {
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
+            <AlertTriangle className="h-16 w-16 text-destructive mb-4" />
             <h1 className="text-3xl font-bold text-primary mb-4">Error</h1>
             <p className="text-muted-foreground">Could not load event details. The data might be incomplete.</p>
         </div>

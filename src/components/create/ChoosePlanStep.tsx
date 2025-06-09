@@ -22,13 +22,14 @@ export interface Plan {
   visits: string;
   description: string;
   isPopular?: boolean;
+  maxVisits: number | null; // null for unlimited
 }
 
 const plans: Plan[] = [
-  { id: 'free', name: 'Free', price: 0, visits: '20 visits', description: 'Up to 20 invitation views.' },
-  { id: 'starter', name: 'Starter', price: 5, visits: '50 visits', description: 'Up to 50 invitation views.', isPopular: true },
-  { id: 'pro', name: 'Pro', price: 10, visits: '100 visits', description: 'Up to 100 invitation views.' },
-  { id: 'unlimited', name: 'Unlimited', price: 15, visits: 'Unlimited visits', description: 'Unlimited invitation views.' },
+  { id: 'free', name: 'Free', price: 0, visits: '20 visits', maxVisits: 20, description: 'Up to 20 invitation views.' },
+  { id: 'starter', name: 'Starter', price: 5, visits: '50 visits', maxVisits: 50, description: 'Up to 50 invitation views.', isPopular: true },
+  { id: 'pro', name: 'Pro', price: 10, visits: '100 visits', maxVisits: 100, description: 'Up to 100 invitation views.' },
+  { id: 'unlimited', name: 'Unlimited', price: 15, visits: 'Unlimited visits', maxVisits: null, description: 'Unlimited invitation views.' },
 ];
 
 interface ChoosePlanStepProps {
@@ -75,13 +76,15 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
       const eventDataToSave = {
         templateId: selectedTemplate.id,
         templateName: selectedTemplate.name,
-        eventDetails: { // Ensure all fields, including new RSVP ones, are saved
+        eventDetails: { 
             ...eventDetails,
             enableRsvp: eventDetails.enableRsvp ?? false,
             customRsvpQuestion: eventDetails.customRsvpQuestion ?? '',
         },
         planId: currentPlan.id,
         planName: currentPlan.name,
+        planMaxVisits: currentPlan.maxVisits, // Save maxVisits
+        visitCount: 0, // Initialize visitCount
         createdAt: serverTimestamp(),
         eventId: eventId,
       };
@@ -95,7 +98,7 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
       }
       
       toast({
-        title: "Link Generated &amp; Saved!",
+        title: "Link Generated & Saved!",
         description: "Your event invitation link is ready and saved to Firestore.",
       });
 
@@ -240,7 +243,7 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
           disabled={!currentPlan || isLoading}
         >
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isLoading ? 'Processing...' : (currentPlan?.price && currentPlan.price > 0 ? `Pay $${currentPlan.price} &amp; Generate Link` : 'Generate Link')}
+          {isLoading ? 'Processing...' : (currentPlan?.price && currentPlan.price > 0 ? `Pay $${currentPlan.price} & Generate Link` : 'Generate Link')}
         </Button>
          <p className="mt-4 text-xs text-muted-foreground">
             Payment simulation and Firestore saving are active.
