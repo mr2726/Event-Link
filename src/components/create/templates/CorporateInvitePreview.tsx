@@ -8,13 +8,21 @@ import { format, parseISO } from 'date-fns';
 
 interface CorporateInvitePreviewProps {
   template: Template;
-  formData: EventDetailsFormData;
+  formData?: EventDetailsFormData; // Made formData optional
 }
 
 const CorporateInvitePreview: React.FC<CorporateInvitePreviewProps> = ({ template, formData }) => {
-  const { eventName, eventDate, eventTime, eventLocation, primaryColor, fontStyle } = formData;
+  const { 
+    eventName = "Corporate Summit 2026", 
+    eventDate = "2026-03-10", 
+    eventTime = "09:00", 
+    eventLocation = "Metro Convention Center",
+    eventDescription = "Annual Business Leaders Conference for innovative strategies and networking.",
+    primaryColor = '#67e8f9', // Default from original design
+    fontStyle = 'Space Grotesk' 
+  } = formData || {};
 
-  const displayDate = eventDate ? format(parseISO(eventDate), "MMMM do, yyyy") : "Select Date";
+  const displayDate = eventDate && !isNaN(Date.parse(eventDate)) ? format(parseISO(eventDate), "MMMM do, yyyy") : "Select Date";
   const displayTime = eventTime || "";
 
   const safeFontStyle = fontStyle || 'Space Grotesk';
@@ -26,16 +34,16 @@ const CorporateInvitePreview: React.FC<CorporateInvitePreviewProps> = ({ templat
     >
       <div className="flex justify-between items-start">
         <h2 className="text-xl font-bold truncate max-w-[80%]" style={{ color: primaryColor || '#67e8f9' }} title={eventName}>
-          {eventName || "Corporate Summit 2026"}
+          {eventName}
         </h2>
         <Briefcase className="h-6 w-6" style={{ color: primaryColor || '#06b6d4' }} />
       </div>
       
       <div className="my-3">
         <p className="text-xs text-slate-300 uppercase tracking-wider mb-1">You are invited to the</p>
-        <p className="text-md font-semibold text-slate-100 truncate max-w-full" title={formData.eventDescription?.substring(0,50)}>
-          {formData.eventDescription?.substring(0,50) || "Annual Business Leaders Conference"}
-           {formData.eventDescription && formData.eventDescription.length > 50 ? "..." : ""}
+        <p className="text-md font-semibold text-slate-100 truncate max-w-full" title={eventDescription?.substring(0,50)}>
+          {eventDescription?.substring(0,50) || "Annual Business Leaders Conference"}
+           {eventDescription && eventDescription.length > 50 ? "..." : ""}
         </p>
       </div>
 
@@ -46,7 +54,7 @@ const CorporateInvitePreview: React.FC<CorporateInvitePreviewProps> = ({ templat
         </div>
         <div className="flex items-center">
           <MapPin className="h-3 w-3 mr-1.5 flex-shrink-0" style={{ color: primaryColor || '#67e8f9' }} />
-          <span className="truncate max-w-[80%]" title={eventLocation}>{eventLocation || "Metro Convention Center"}</span>
+          <span className="truncate max-w-[80%]" title={eventLocation}>{eventLocation}</span>
         </div>
       </div>
       

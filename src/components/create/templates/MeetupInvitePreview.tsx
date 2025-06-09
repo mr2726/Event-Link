@@ -3,18 +3,26 @@
 
 import type { Template } from '@/app/create/page';
 import type { EventDetailsFormData } from '../CustomizeDetailsStep';
-import { Users, Coffee, MessageCircle, CalendarClock, MapPin } from 'lucide-react';
+import { Users, Coffee, MessageCircle, MapPin } from 'lucide-react'; // Removed CalendarClock as it wasn't used
 import { format, parseISO } from 'date-fns';
 
 interface MeetupInvitePreviewProps {
   template: Template;
-  formData: EventDetailsFormData;
+  formData?: EventDetailsFormData; // Made formData optional
 }
 
 const MeetupInvitePreview: React.FC<MeetupInvitePreviewProps> = ({ template, formData }) => {
-  const { eventName, eventDate, eventTime, eventLocation, primaryColor, fontStyle } = formData;
+  const { 
+    eventName = "Local Coders Meetup!", 
+    eventDate = "2025-08-20", 
+    eventTime = "18:30", 
+    eventLocation = "The Tech Hub, Downtown",
+    eventDescription = "Join us for tech talks, networking, and free pizza!",
+    primaryColor = '#f59e0b', // Default from original design
+    fontStyle = 'Space Grotesk' 
+  } = formData || {};
 
-  const displayDate = eventDate ? format(parseISO(eventDate), "MMM d, yyyy") : "Select Date";
+  const displayDate = eventDate && !isNaN(Date.parse(eventDate)) ? format(parseISO(eventDate), "MMM d, yyyy") : "Select Date";
   const displayTime = eventTime || "Set Time";
   
   const safeFontStyle = fontStyle || 'Space Grotesk';
@@ -31,11 +39,11 @@ const MeetupInvitePreview: React.FC<MeetupInvitePreviewProps> = ({ template, for
           style={{ color: primaryColor || '#b45309' }}
           title={eventName}
         >
-          {eventName || "Local Coders Meetup!"}
+          {eventName}
         </h2>
-        <p className="text-xs my-1.5 px-1 truncate max-w-full" style={{ color: primaryColor || '#d97706' }} title={formData.eventDescription?.substring(0,60)}>
-          {formData.eventDescription?.substring(0,60) || "Join us for tech talks & networking!"}
-           {formData.eventDescription && formData.eventDescription.length > 60 ? "..." : ""}
+        <p className="text-xs my-1.5 px-1 truncate max-w-full" style={{ color: primaryColor || '#d97706' }} title={eventDescription?.substring(0,60)}>
+          {eventDescription?.substring(0,60) || "Join us for tech talks & networking!"}
+           {eventDescription && eventDescription.length > 60 ? "..." : ""}
         </p>
         
         <div className="flex items-center justify-center text-xs mt-2 space-x-2" style={{ color: primaryColor || '#ea580c' }}>
@@ -58,7 +66,7 @@ const MeetupInvitePreview: React.FC<MeetupInvitePreviewProps> = ({ template, for
       
       <div className="mt-3 w-full text-center">
         <p className="text-xs truncate max-w-full" style={{ color: primaryColor || '#b45309' }} title={eventLocation}>
-            <MapPin className="inline h-3 w-3 mr-0.5" /> {eventLocation || "The Tech Hub, Downtown"}
+            <MapPin className="inline h-3 w-3 mr-0.5" /> {eventLocation}
         </p>
       </div>
     </div>

@@ -3,41 +3,46 @@
 
 import type { Template } from '@/app/create/page';
 import type { EventDetailsFormData } from '../CustomizeDetailsStep';
-import { Gift, Zap, Music, Pizza, CalendarClock } from 'lucide-react';
+import { Gift, Zap, Music, Pizza } from 'lucide-react'; // Removed CalendarClock
 import { format, parseISO } from 'date-fns';
 
 interface PartyInvitePreviewProps {
   template: Template;
-  formData: EventDetailsFormData;
+  formData?: EventDetailsFormData; // Made formData optional
 }
 
 const PartyInvitePreview: React.FC<PartyInvitePreviewProps> = ({ template, formData }) => {
-  const { eventName, eventDate, eventTime, primaryColor, fontStyle, eventLocation } = formData;
+  const { 
+    eventName = "Leo's Birthday Bash", 
+    eventDate = "2025-09-05", 
+    eventTime = "20:00", 
+    eventLocation = "The Usual Spot!",
+    primaryColor = '#DB2777', // Default from original design
+    fontStyle = 'Montserrat' 
+  } = formData || {};
   
-  const displayDate = eventDate ? format(parseISO(eventDate), "MMM d") : "Date";
+  const displayDate = eventDate && !isNaN(Date.parse(eventDate)) ? format(parseISO(eventDate), "MMM d") : "Date";
   const displayTime = eventTime || "Time";
 
   const safeFontStyle = fontStyle || 'Montserrat';
-  const safePrimaryColor = primaryColor || '#DB2777'; // Default to a pinkish color
+  const safePrimaryColor = primaryColor || '#DB2777';
 
-  // Function to generate a contrasting color or a fixed one
   const getSecondaryColor = (hexcolor: string) => {
-    // This is a simple heuristic, could be improved
     const r = parseInt(hexcolor.slice(1, 3), 16);
     const g = parseInt(hexcolor.slice(3, 5), 16);
     const b = parseInt(hexcolor.slice(5, 7), 16);
     const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    return brightness > 125 ? '#333333' : '#FFFFFF'; // Dark or light text
+    return brightness > 125 ? '#333333' : '#FFFFFF';
   };
 
   const accentTextColor = getSecondaryColor(safePrimaryColor);
-  const yellowAccent = '#FDE047'; // A fixed vibrant yellow for contrast
+  const yellowAccent = '#FDE047';
 
   return (
     <div 
       className="w-full aspect-[3/4] p-4 flex flex-col items-center justify-center border-2 rounded-t-lg overflow-hidden text-white relative shadow-xl"
       style={{ 
-        background: `linear-gradient(to br, ${safePrimaryColor}, ${safePrimaryColor === '#DB2777' ? '#7E22CE' : '#9333EA'})`, // Adjust gradient if color changes
+        background: `linear-gradient(to br, ${safePrimaryColor}, ${safePrimaryColor === '#DB2777' ? '#7E22CE' : '#9333EA'})`,
         borderColor: yellowAccent,
         fontFamily: `'${safeFontStyle}', sans-serif`
       }}
@@ -79,7 +84,7 @@ const PartyInvitePreview: React.FC<PartyInvitePreviewProps> = ({ template, formD
         </p>
       </div>
       <p className="z-10 mt-3 text-center text-xs" style={{ color: `${yellowAccent}E6` }}>
-        At: <span className="font-semibold truncate max-w-[150px] inline-block align-bottom" title={eventLocation}>{eventLocation || "The Usual Spot!"}</span>
+        At: <span className="font-semibold truncate max-w-[150px] inline-block align-bottom" title={eventLocation}>{eventLocation}</span>
       </p>
     </div>
   );

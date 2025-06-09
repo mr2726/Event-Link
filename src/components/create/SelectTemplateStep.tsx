@@ -20,13 +20,11 @@ interface SelectTemplateStepProps {
 }
 
 const renderTemplatePreviewOnCard = (template: Template) => {
-  // Ensure the preview components are styled to fit the card
-  // The template preview components themselves handle their aspect ratio and basic styling.
-  // We might need a wrapper div if specific sizing is needed here.
   const previewContainerClasses = "w-full h-auto aspect-[3/4] object-cover rounded-t-lg overflow-hidden";
 
   switch (template.id) {
     case 'wedding':
+      // formData is not passed here, component will use its defaults
       return <div className={previewContainerClasses}><WeddingInvitePreview template={template} /></div>;
     case 'corporate':
       return <div className={previewContainerClasses}><CorporateInvitePreview template={template} /></div>;
@@ -37,8 +35,6 @@ const renderTemplatePreviewOnCard = (template: Template) => {
     case 'conference':
       return <div className={previewContainerClasses}><ConferenceInvitePreview template={template} /></div>;
     default:
-      // Fallback to original image if no specific preview component is found
-      // This also means the dialog will use this as a fallback too.
       return (
         <Image
           src={template.previewImageUrl}
@@ -90,8 +86,9 @@ const SelectTemplateStep: React.FC<SelectTemplateStepProps> = ({ templates, onTe
                     </DialogDescription>
                   </DialogHeader>
                   <div className="my-4">
+                    {/* Dialog still uses placeholder image for simplicity of large preview */}
                     <Image
-                      src={template.previewImageUrl} // Dialog still uses placeholder image
+                      src={template.previewImageUrl} 
                       alt={`Preview of ${template.name}`}
                       width={600}
                       height={800}
@@ -105,7 +102,6 @@ const SelectTemplateStep: React.FC<SelectTemplateStepProps> = ({ templates, onTe
                     </DialogClose>
                      <Button 
                         onClick={() => {
-                           // Need to find a way to close the dialog after selection if DialogClose is not enough
                            const closeButton = document.querySelector('[aria-label="Close"]');
                            if(closeButton instanceof HTMLElement) closeButton.click();
                            onTemplateSelect(template);
@@ -126,4 +122,3 @@ const SelectTemplateStep: React.FC<SelectTemplateStepProps> = ({ templates, onTe
 };
 
 export default SelectTemplateStep;
-

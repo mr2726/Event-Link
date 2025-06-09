@@ -3,23 +3,31 @@
 
 import type { Template } from '@/app/create/page';
 import type { EventDetailsFormData } from '../CustomizeDetailsStep';
-import { Mic, Users, Wifi, CalendarClock, MapPin } from 'lucide-react';
+import { Mic, Users, Wifi } from 'lucide-react'; // Removed CalendarClock, MapPin
 import { format, parseISO } from 'date-fns';
 
 interface ConferenceInvitePreviewProps {
   template: Template;
-  formData: EventDetailsFormData;
+  formData?: EventDetailsFormData; // Made formData optional
 }
 
 const ConferenceInvitePreview: React.FC<ConferenceInvitePreviewProps> = ({ template, formData }) => {
-  const { eventName, eventDate, eventTime, eventLocation, primaryColor, fontStyle } = formData;
+  const { 
+    eventName = "TechForward Summit", 
+    eventDate = "2025-11-05", 
+    eventTime = "10:00", 
+    eventLocation = "Silicon Valley & Virtual",
+    eventDescription = "The Future of Digital Transformation and AI.",
+    primaryColor = '#39FF14', // Default neon green
+    fontStyle = 'Space Grotesk' 
+  } = formData || {};
 
-  const displayDate = eventDate ? format(parseISO(eventDate), "MMM dd") : "Date";
+  const displayDate = eventDate && !isNaN(Date.parse(eventDate)) ? format(parseISO(eventDate), "MMM dd") : "Date";
   const displayTime = eventTime ? ` - ${eventTime}` : "";
-  const year = eventDate ? format(parseISO(eventDate), "yyyy") : "Year";
+  const year = eventDate && !isNaN(Date.parse(eventDate)) ? format(parseISO(eventDate), "yyyy") : "Year";
 
   const safeFontStyle = fontStyle || 'Space Grotesk';
-  const safePrimaryColor = primaryColor || '#39FF14'; // Default to neon green
+  const safePrimaryColor = primaryColor || '#39FF14';
 
   return (
     <div 
@@ -42,11 +50,11 @@ const ConferenceInvitePreview: React.FC<ConferenceInvitePreviewProps> = ({ templ
           style={{ fontFamily: `'${safeFontStyle}', sans-serif` }}
           title={eventName}
         >
-          {eventName || `TechForward ${year}`}
+          {eventName}
         </h2>
-        <p className="text-sm text-gray-400 mt-1 truncate max-w-full" title={formData.eventDescription?.substring(0,40)}>
-          {formData.eventDescription?.substring(0,40) || "The Future of Digital Transformation"}
-           {formData.eventDescription && formData.eventDescription.length > 40 ? "..." : ""}
+        <p className="text-sm text-gray-400 mt-1 truncate max-w-full" title={eventDescription?.substring(0,40)}>
+          {eventDescription?.substring(0,40) || "The Future of Digital Transformation"}
+           {eventDescription && eventDescription.length > 40 ? "..." : ""}
         </p>
       </main>
 
@@ -65,7 +73,7 @@ const ConferenceInvitePreview: React.FC<ConferenceInvitePreviewProps> = ({ templ
         </div>
         <div className="border-t border-gray-700 pt-1.5 mt-1.5">
           <p className="text-sm font-semibold" style={{ color: safePrimaryColor }}>{displayDate}{displayTime}, {year}</p>
-          <p className="text-xs text-gray-500 truncate max-w-full" title={eventLocation}>{eventLocation || "Silicon Valley & Virtual"}</p>
+          <p className="text-xs text-gray-500 truncate max-w-full" title={eventLocation}>{eventLocation}</p>
         </div>
       </footer>
     </div>

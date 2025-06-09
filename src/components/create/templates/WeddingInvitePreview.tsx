@@ -7,16 +7,24 @@ import { format, parseISO } from 'date-fns';
 
 interface WeddingInvitePreviewProps {
   template: Template;
-  formData: EventDetailsFormData;
+  formData?: EventDetailsFormData; // Made formData optional
 }
 
 const WeddingInvitePreview: React.FC<WeddingInvitePreviewProps> = ({ template, formData }) => {
-  const { eventName, eventDate, eventTime, primaryColor, fontStyle } = formData;
+  // Provide default values if formData or its properties are undefined
+  const { 
+    eventName = "Sophia & Liam", 
+    eventDate = "2025-07-15", // Default date string
+    eventTime = "14:00", 
+    eventLocation = "The Grand Hall, New York",
+    primaryColor = '#B45309', // Default from original design
+    fontStyle = 'Playfair Display' 
+  } = formData || {};
 
-  const displayDate = eventDate ? format(parseISO(eventDate), "MMMM do, yyyy") : "Select a Date";
+  const displayDate = eventDate && !isNaN(Date.parse(eventDate)) ? format(parseISO(eventDate), "MMMM do, yyyy") : "Select a Date";
   const displayTime = eventTime || "Set Time";
   
-  const safeFontStyle = fontStyle || 'Playfair Display'; // Default to a suitable wedding font
+  const safeFontStyle = fontStyle || 'Playfair Display';
 
   return (
     <div 
@@ -35,7 +43,7 @@ const WeddingInvitePreview: React.FC<WeddingInvitePreviewProps> = ({ template, f
           style={{ fontFamily: `'${safeFontStyle}', serif`, color: primaryColor ? primaryColor : '#832729' }}
           title={eventName}
         >
-          {eventName || "Sophia & Liam"}
+          {eventName}
         </h2>
         <p className="text-xs mt-1" style={{ fontFamily: "'Parisienne', cursive", color: primaryColor || '#B45309' }}>
           request the honor of your presence
@@ -47,8 +55,8 @@ const WeddingInvitePreview: React.FC<WeddingInvitePreviewProps> = ({ template, f
         <div className="mt-4 border-t pt-2 w-3/4 mx-auto" style={{borderColor: primaryColor || '#FECACA'}}>
           <p className="text-xs font-semibold" style={{color: primaryColor || '#9A3412'}}>{displayDate.toUpperCase()}</p>
           <p className="text-xs" style={{color: primaryColor || '#B45309'}}>AT {displayTime}</p>
-          <p className="text-xs mt-1 truncate max-w-[90%]" style={{color: primaryColor || '#B45309'}} title={formData.eventLocation}>
-            {formData.eventLocation || "The Grand Hall, New York"}
+          <p className="text-xs mt-1 truncate max-w-[90%]" style={{color: primaryColor || '#B45309'}} title={eventLocation}>
+            {eventLocation}
           </p>
         </div>
       </div>
