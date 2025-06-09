@@ -111,10 +111,8 @@ export function Demos() {
               <CardFooter className="p-6 bg-muted/50">
                 <Button variant="outline" asChild className="w-full border-accent text-accent hover:bg-accent/10">
                   {/* These links are for display purposes only as per PRD */}
-                  <Link href="#" passHref legacyBehavior>
-                    <a target="_blank" rel="noopener noreferrer">
-                      View Demo (Link: {demo.shortLink})
-                    </a>
+                  <Link href="#" target="_blank" rel="noopener noreferrer">
+                    View Demo (Link: {demo.shortLink})
                   </Link>
                 </Button>
               </CardFooter>
