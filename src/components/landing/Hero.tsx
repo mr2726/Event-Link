@@ -20,7 +20,7 @@ export function Hero() {
                 <Link href="/create">Get Started Now</Link>
               </Button>
               <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary/10 transition-all duration-300 transform hover:scale-105" asChild>
-                <Link href="/#features">Learn More</Link>
+                <Link href="/learn-more">Learn More</Link>
               </Button>
             </div>
              <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
