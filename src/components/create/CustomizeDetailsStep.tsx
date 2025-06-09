@@ -8,10 +8,18 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { Label } from '@/components/ui/label'; // This import seems unused, can be removed if not used elsewhere
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import Image from 'next/image';
+// Removed Image import as we'll use component previews
+// import Image from 'next/image';
+
+// Import the template preview components
+import WeddingInvitePreview from './templates/WeddingInvitePreview';
+import CorporateInvitePreview from './templates/CorporateInvitePreview';
+import MeetupInvitePreview from './templates/MeetupInvitePreview';
+import PartyInvitePreview from './templates/PartyInvitePreview';
+import ConferenceInvitePreview from './templates/ConferenceInvitePreview';
 
 const eventDetailsSchema = z.object({
   eventName: z.string().min(3, { message: "Event name must be at least 3 characters." }),
@@ -31,6 +39,35 @@ interface CustomizeDetailsStepProps {
   onSubmit: (data: EventDetailsFormData) => void;
   initialData?: EventDetailsFormData | null;
 }
+
+// Helper function to render the selected template preview
+const renderSelectedTemplatePreview = (template: Template) => {
+  // Ensure the preview components are styled to fit the container
+  // The template preview components themselves handle their aspect ratio and basic styling.
+  // We might need a wrapper div if specific sizing is needed here.
+  const previewContainerClasses = "w-full h-auto object-cover rounded-md border border-border overflow-hidden";
+
+  switch (template.id) {
+    case 'wedding':
+      return <div className={previewContainerClasses}><WeddingInvitePreview template={template} /></div>;
+    case 'corporate':
+      return <div className={previewContainerClasses}><CorporateInvitePreview template={template} /></div>;
+    case 'meetup':
+      return <div className={previewContainerClasses}><MeetupInvitePreview template={template} /></div>;
+    case 'party':
+      return <div className={previewContainerClasses}><PartyInvitePreview template={template} /></div>;
+    case 'conference':
+      return <div className={previewContainerClasses}><ConferenceInvitePreview template={template} /></div>;
+    default:
+      // Fallback if a new template ID is added without a corresponding preview component
+      // This could be a placeholder or a simple message.
+      // For now, let's render the placeholder image as a fallback.
+      // (Note: This requires re-importing Image from 'next/image' if this fallback is desired)
+      // For simplicity, we'll return a simple div or null if next/image is not re-imported.
+      return <div className="w-full aspect-[3/4] bg-muted flex items-center justify-center text-sm text-muted-foreground rounded-md border border-border">No preview available for this template.</div>;
+  }
+};
+
 
 const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, onSubmit, initialData }) => {
   const form = useForm<EventDetailsFormData>({
@@ -61,14 +98,8 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
       <div className="grid md:grid-cols-3 gap-8 items-start">
         <div className="md:col-span-1 p-4 bg-card rounded-lg shadow-lg">
             <h3 className="text-xl font-semibold font-headline text-foreground mb-3">Template Preview</h3>
-            <Image
-                src={template.previewImageUrl}
-                alt={template.name}
-                width={300}
-                height={400}
-                className="w-full h-auto object-cover rounded-md border border-border"
-                data-ai-hint={template.aiHint}
-            />
+            {/* Replace Image with the dynamic template preview */}
+            {renderSelectedTemplatePreview(template)}
             <p className="text-sm text-muted-foreground mt-2">{template.description}</p>
         </div>
 
@@ -195,6 +226,7 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
                           <SelectItem value="Times New Roman">Times New Roman (Classic Serif)</SelectItem>
                           <SelectItem value="Montserrat">Montserrat (Stylish Sans)</SelectItem>
                           <SelectItem value="Playfair Display">Playfair Display (Elegant Serif)</SelectItem>
+                           <SelectItem value="Parisienne">Parisienne (Cursive Script)</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>Select a font for your invite's text.</FormDescription>

@@ -19,20 +19,26 @@ interface SelectTemplateStepProps {
   onTemplateSelect: (template: Template) => void;
 }
 
-const renderTemplatePreview = (template: Template) => {
+const renderTemplatePreviewOnCard = (template: Template) => {
+  // Ensure the preview components are styled to fit the card
+  // The template preview components themselves handle their aspect ratio and basic styling.
+  // We might need a wrapper div if specific sizing is needed here.
+  const previewContainerClasses = "w-full h-auto aspect-[3/4] object-cover rounded-t-lg overflow-hidden";
+
   switch (template.id) {
     case 'wedding':
-      return <WeddingInvitePreview template={template} />;
+      return <div className={previewContainerClasses}><WeddingInvitePreview template={template} /></div>;
     case 'corporate':
-      return <CorporateInvitePreview template={template} />;
+      return <div className={previewContainerClasses}><CorporateInvitePreview template={template} /></div>;
     case 'meetup':
-      return <MeetupInvitePreview template={template} />;
+      return <div className={previewContainerClasses}><MeetupInvitePreview template={template} /></div>;
     case 'party':
-      return <PartyInvitePreview template={template} />;
+      return <div className={previewContainerClasses}><PartyInvitePreview template={template} /></div>;
     case 'conference':
-      return <ConferenceInvitePreview template={template} />;
+      return <div className={previewContainerClasses}><ConferenceInvitePreview template={template} /></div>;
     default:
       // Fallback to original image if no specific preview component is found
+      // This also means the dialog will use this as a fallback too.
       return (
         <Image
           src={template.previewImageUrl}
@@ -56,7 +62,7 @@ const SelectTemplateStep: React.FC<SelectTemplateStepProps> = ({ templates, onTe
         {templates.map((template) => (
           <Card key={template.id} className="flex flex-col bg-card hover:shadow-primary/20 transition-shadow duration-300">
             <CardHeader className="p-0">
-              {renderTemplatePreview(template)}
+              {renderTemplatePreviewOnCard(template)}
             </CardHeader>
             <CardContent className="p-4 flex-grow">
               <CardTitle className="text-lg font-semibold font-headline text-foreground">{template.name}</CardTitle>
@@ -99,8 +105,10 @@ const SelectTemplateStep: React.FC<SelectTemplateStepProps> = ({ templates, onTe
                     </DialogClose>
                      <Button 
                         onClick={() => {
+                           // Need to find a way to close the dialog after selection if DialogClose is not enough
+                           const closeButton = document.querySelector('[aria-label="Close"]');
+                           if(closeButton instanceof HTMLElement) closeButton.click();
                            onTemplateSelect(template);
-                           // Consider closing dialog if DialogClose doesn't handle it automatically after selection
                         }} 
                         className="bg-accent text-accent-foreground hover:bg-accent/90"
                       >
@@ -118,3 +126,4 @@ const SelectTemplateStep: React.FC<SelectTemplateStepProps> = ({ templates, onTe
 };
 
 export default SelectTemplateStep;
+
