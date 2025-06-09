@@ -4,7 +4,7 @@
 import type { Template } from '@/app/create/page';
 import type { EventDetailsFormData } from '../CustomizeDetailsStep';
 import { format, parseISO } from 'date-fns';
-import { Twitter, Linkedin, Send, Video, Twitch, Youtube, Link as LinkIcon } from 'lucide-react';
+import { Twitter, Linkedin, Send, Video, Twitch, Youtube, Link as LinkIcon, Users } from 'lucide-react';
 import { WhatsappIcon } from '@/components/icons/WhatsappIcon';
 
 interface WeddingInvitePreviewProps {
@@ -27,18 +27,20 @@ const WeddingInvitePreview: React.FC<WeddingInvitePreviewProps> = ({ template, f
     eventDate = "2025-07-15",
     eventTime = "14:00", 
     eventLocation = "The Grand Hall, New York",
-    eventDescription = "Join us as we celebrate our special day.", // Added default
+    eventDescription = "Join us as we celebrate our special day.",
     primaryColor = '#B45309', 
     fontStyle = 'Playfair Display',
     optionalLink,
-    twitterLink, linkedinLink, telegramLink, whatsappLink, googleMeetLink, zoomLink, twitchLink, youtubeLink
+    twitterLink, linkedinLink, telegramLink, whatsappLink, googleMeetLink, zoomLink, twitchLink, youtubeLink,
+    enableRsvp = false, 
+    customRsvpQuestion = '',
   } = formData || {};
 
   const displayDate = eventDate && !isNaN(Date.parse(eventDate)) ? format(parseISO(eventDate), "MMMM do, yyyy") : "Select a Date";
   const displayTime = eventTime || "Set Time";
   
   const safeFontStyle = fontStyle || 'Playfair Display';
-  const linkColor = primaryColor === '#B45309' ? '#832729' : primaryColor; // ensure links are visible
+  const linkColor = primaryColor === '#B45309' ? '#832729' : primaryColor; 
 
   return (
     <div 
@@ -83,11 +85,17 @@ const WeddingInvitePreview: React.FC<WeddingInvitePreviewProps> = ({ template, f
         {optionalLink && (
           <a href={optionalLink} target="_blank" rel="noopener noreferrer" 
              className="text-[10px] mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded hover:opacity-80"
-             style={{ backgroundColor: `${primaryColor}20`, color: linkColor }}>
+             style={{ backgroundColor: `${linkColor}20`, color: linkColor }}>
             <LinkIcon className="h-2.5 w-2.5" /> Event Link
           </a>
         )}
       </div>
+       {enableRsvp && (
+        <div className="mt-3 text-center text-[10px] p-1.5 rounded" style={{ backgroundColor: `${linkColor}1A`, color: linkColor }}>
+          <Users className="inline h-3 w-3 mr-1" />
+          RSVP Requested {customRsvpQuestion ? `(Incl. "${customRsvpQuestion.substring(0,20)}${customRsvpQuestion.length > 20 ? '...' : ''}")` : ""}
+        </div>
+      )}
       
       <div className="mt-auto pt-2 flex flex-wrap justify-center items-center gap-2 px-2">
         <SocialLink href={twitterLink} icon={Twitter} title="Twitter" color={linkColor} />
@@ -104,5 +112,4 @@ const WeddingInvitePreview: React.FC<WeddingInvitePreviewProps> = ({ template, f
 };
 
 export default WeddingInvitePreview;
-
     

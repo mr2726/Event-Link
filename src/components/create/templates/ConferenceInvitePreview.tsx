@@ -31,7 +31,9 @@ const ConferenceInvitePreview: React.FC<ConferenceInvitePreviewProps> = ({ templ
     primaryColor = '#39FF14', 
     fontStyle = 'Space Grotesk',
     optionalLink,
-    twitterLink, linkedinLink, telegramLink, whatsappLink, googleMeetLink, zoomLink, twitchLink, youtubeLink
+    twitterLink, linkedinLink, telegramLink, whatsappLink, googleMeetLink, zoomLink, twitchLink, youtubeLink,
+    enableRsvp = false, 
+    customRsvpQuestion = '',
   } = formData || {};
 
   const displayDate = eventDate && !isNaN(Date.parse(eventDate)) ? format(parseISO(eventDate), "MMM dd") : "Date";
@@ -41,7 +43,6 @@ const ConferenceInvitePreview: React.FC<ConferenceInvitePreviewProps> = ({ templ
   const safeFontStyle = fontStyle || 'Space Grotesk';
   const safePrimaryColor = primaryColor || '#39FF14';
   const iconColor = safePrimaryColor;
-  const textColor = '#E5E7EB'; // Light gray for text on dark background
 
   return (
     <div 
@@ -49,7 +50,7 @@ const ConferenceInvitePreview: React.FC<ConferenceInvitePreviewProps> = ({ templ
       style={{ fontFamily: `'${safeFontStyle}', sans-serif` }}
     >
       <header className="flex justify-between items-center">
-        <div className="p-0.5 rounded-sm" style={{ backgroundColor: `${safePrimaryColor}1A`/*10% opacity*/ }}>
+        <div className="p-0.5 rounded-sm" style={{ backgroundColor: `${safePrimaryColor}1A` }}>
              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" style={{ color: safePrimaryColor }}>
                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"></path>
                 <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"></path>
@@ -74,15 +75,15 @@ const ConferenceInvitePreview: React.FC<ConferenceInvitePreviewProps> = ({ templ
       <footer className="mt-auto space-y-1.5">
         <div className="flex items-center text-[10px] text-gray-300">
           <Mic className="h-3 w-3 mr-1 flex-shrink-0" style={{ color: iconColor }}/>
-          <span>Keynotes & Panels</span>
+          <span>Keynotes &amp; Panels</span>
         </div>
         <div className="flex items-center text-[10px] text-gray-300">
           <Users className="h-3 w-3 mr-1 flex-shrink-0" style={{ color: iconColor }}/>
-          <span>Workshops & Networking</span>
+          <span>Workshops &amp; Networking</span>
         </div>
          <div className="flex items-center text-[10px] text-gray-300">
           <Wifi className="h-3 w-3 mr-1 flex-shrink-0" style={{ color: iconColor }}/>
-          <span>Hybrid Event: Online & Onsite</span>
+          <span>Hybrid Event: Online &amp; Onsite</span>
         </div>
 
         {optionalLink && (
@@ -91,6 +92,12 @@ const ConferenceInvitePreview: React.FC<ConferenceInvitePreviewProps> = ({ templ
              style={{ color: iconColor }}>
             <LinkIcon className="h-3 w-3" /> Conference Link
           </a>
+        )}
+        {enableRsvp && (
+          <div className="text-[10px] p-1 rounded text-center" style={{ backgroundColor: `${iconColor}20`, color: iconColor }}>
+            <Users className="inline h-3 w-3 mr-1" />
+            Registration / RSVP Open {customRsvpQuestion ? ` (Q: "${customRsvpQuestion.substring(0,10)}...")` : ""}
+          </div>
         )}
 
         <div className="border-t border-gray-700 pt-1 mt-1 space-y-0.5">
@@ -113,5 +120,4 @@ const ConferenceInvitePreview: React.FC<ConferenceInvitePreviewProps> = ({ templ
 };
 
 export default ConferenceInvitePreview;
-
     

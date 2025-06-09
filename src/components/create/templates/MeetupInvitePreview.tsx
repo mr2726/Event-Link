@@ -31,7 +31,9 @@ const MeetupInvitePreview: React.FC<MeetupInvitePreviewProps> = ({ template, for
     primaryColor = '#f59e0b', 
     fontStyle = 'Space Grotesk',
     optionalLink,
-    twitterLink, linkedinLink, telegramLink, whatsappLink, googleMeetLink, zoomLink, twitchLink, youtubeLink
+    twitterLink, linkedinLink, telegramLink, whatsappLink, googleMeetLink, zoomLink, twitchLink, youtubeLink,
+    enableRsvp = false, 
+    customRsvpQuestion = '',
   } = formData || {};
 
   const displayDate = eventDate && !isNaN(Date.parse(eventDate)) ? format(parseISO(eventDate), "MMM d, yyyy") : "Select Date";
@@ -82,6 +84,12 @@ const MeetupInvitePreview: React.FC<MeetupInvitePreviewProps> = ({ template, for
             <LinkIcon className="h-2.5 w-2.5" /> Event Link
           </a>
         )}
+         {enableRsvp && (
+          <div className="mt-1.5 text-[9px] p-1 rounded" style={{ backgroundColor: `${iconColor}1A`, color: textColor }}>
+            <Users className="inline h-2.5 w-2.5 mr-0.5" />
+            RSVP {customRsvpQuestion ? `(Q: "${customRsvpQuestion.substring(0,20)}...")` : "Active"}
+          </div>
+        )}
       </div>
       
       <div className="mt-auto w-full text-center space-y-1.5">
@@ -104,5 +112,4 @@ const MeetupInvitePreview: React.FC<MeetupInvitePreviewProps> = ({ template, for
 };
 
 export default MeetupInvitePreview;
-
     

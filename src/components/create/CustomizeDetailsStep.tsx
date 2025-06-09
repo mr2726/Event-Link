@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Checkbox } from '@/components/ui/checkbox'; 
 
 import WeddingInvitePreview from './templates/WeddingInvitePreview';
 import CorporateInvitePreview from './templates/CorporateInvitePreview';
@@ -34,6 +35,8 @@ const eventDetailsSchema = z.object({
   zoomLink: z.string().url({ message: "Invalid Zoom URL." }).optional().or(z.literal('')).default(''),
   twitchLink: z.string().url({ message: "Invalid Twitch URL." }).optional().or(z.literal('')).default(''),
   youtubeLink: z.string().url({ message: "Invalid YouTube URL." }).optional().or(z.literal('')).default(''),
+  enableRsvp: z.boolean().default(false).optional(),
+  customRsvpQuestion: z.string().max(100, {message: "Custom question must be 100 characters or less."}).optional().or(z.literal('')).default(''),
 });
 
 export type EventDetailsFormData = z.infer<typeof eventDetailsSchema>;
@@ -67,10 +70,11 @@ const renderSelectedTemplatePreview = (template: Template, formData: EventDetail
 const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, onSubmit, initialData }) => {
   const form = useForm<EventDetailsFormData>({
     resolver: zodResolver(eventDetailsSchema),
-    defaultValues: initialData || eventDetailsSchema.parse({}), // Use schema defaults
+    defaultValues: initialData || eventDetailsSchema.parse({}), 
   });
 
   const watchedValues = form.watch();
+  const watchEnableRsvp = form.watch("enableRsvp");
 
   const handleSubmitForm: SubmitHandler<EventDetailsFormData> = (data) => {
     onSubmit(data);
@@ -223,7 +227,7 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
                 />
               </div>
 
-              <h3 className="text-lg font-semibold font-headline text-foreground pt-4 border-t border-border">Social & Meeting Links (Optional)</h3>
+              <h3 className="text-lg font-semibold font-headline text-foreground pt-4 border-t border-border">Social &amp; Meeting Links (Optional)</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="twitterLink" render={({ field }) => ( <FormItem> <FormLabel>Twitter</FormLabel> <FormControl><Input placeholder="https://twitter.com/yourprofile" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                 <FormField control={form.control} name="linkedinLink" render={({ field }) => ( <FormItem> <FormLabel>LinkedIn</FormLabel> <FormControl><Input placeholder="https://linkedin.com/in/yourprofile" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
@@ -235,9 +239,49 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
                 <FormField control={form.control} name="youtubeLink" render={({ field }) => ( <FormItem> <FormLabel>YouTube</FormLabel> <FormControl><Input placeholder="https://youtube.com/yourchannel" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
               </div>
 
+              <h3 className="text-lg font-semibold font-headline text-foreground pt-4 border-t border-border">RSVP &amp; Guest Data Collection</h3>
+                <FormField
+                  control={form.control}
+                  name="enableRsvp"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="cursor-pointer">
+                          Enable RSVP &amp; Custom Question
+                        </FormLabel>
+                        <FormDescription>
+                          Collect guest names, emails, and an answer to one custom question.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                {watchEnableRsvp && (
+                  <FormField
+                    control={form.control}
+                    name="customRsvpQuestion"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Custom Question for Guests (Optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Any dietary restrictions?" {...field} />
+                        </FormControl>
+                        <FormDescription>This question will be asked if RSVP is enabled. Keep it short (max 100 chars).</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
 
               <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                Save Details & Proceed
+                Save Details &amp; Proceed
               </Button>
             </form>
           </Form>
@@ -248,5 +292,4 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
 };
 
 export default CustomizeDetailsStep;
-
     

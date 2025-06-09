@@ -3,7 +3,7 @@
 
 import type { Template } from '@/app/create/page';
 import type { EventDetailsFormData } from '../CustomizeDetailsStep';
-import { Briefcase, CalendarDays, MapPin, Twitter, Linkedin, Send, Video, Twitch, Youtube, Link as LinkIcon } from 'lucide-react';
+import { Briefcase, CalendarDays, MapPin, Twitter, Linkedin, Send, Video, Twitch, Youtube, Link as LinkIcon, Users } from 'lucide-react';
 import { WhatsappIcon } from '@/components/icons/WhatsappIcon';
 import { format, parseISO } from 'date-fns';
 
@@ -31,7 +31,9 @@ const CorporateInvitePreview: React.FC<CorporateInvitePreviewProps> = ({ templat
     primaryColor = '#67e8f9', 
     fontStyle = 'Space Grotesk',
     optionalLink,
-    twitterLink, linkedinLink, telegramLink, whatsappLink, googleMeetLink, zoomLink, twitchLink, youtubeLink
+    twitterLink, linkedinLink, telegramLink, whatsappLink, googleMeetLink, zoomLink, twitchLink, youtubeLink,
+    enableRsvp = false, 
+    customRsvpQuestion = '',
   } = formData || {};
 
   const displayDate = eventDate && !isNaN(Date.parse(eventDate)) ? format(parseISO(eventDate), "MMMM do, yyyy") : "Select Date";
@@ -76,6 +78,12 @@ const CorporateInvitePreview: React.FC<CorporateInvitePreviewProps> = ({ templat
           </a>
         )}
       </div>
+       {enableRsvp && (
+        <div className="mt-2 text-[10px] p-1.5 rounded" style={{ backgroundColor: `${iconColor}20`, color: iconColor }}>
+          <Users className="inline h-3 w-3 mr-1" />
+          RSVP / Data Collection Enabled {customRsvpQuestion ? ` (Q: "${customRsvpQuestion.substring(0,15)}...")` : ""}
+        </div>
+      )}
       
       <div className="mt-auto border-t border-slate-600 pt-2 space-y-1.5">
         <div className="flex flex-wrap justify-center items-center gap-2 px-1">
@@ -97,5 +105,4 @@ const CorporateInvitePreview: React.FC<CorporateInvitePreviewProps> = ({ templat
 };
 
 export default CorporateInvitePreview;
-
     

@@ -8,11 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
+import { Check, Copy, ExternalLink, Loader2, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import Link from 'next/link';
 
 export interface Plan {
   id: string;
@@ -39,7 +40,9 @@ interface ChoosePlanStepProps {
 const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDetails, selectedTemplate }) => {
   const [selectedPlanId, setSelectedPlanId] = useState<string>(plans.find(p => p.isPopular)?.id || 'starter');
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [analyticsLink, setAnalyticsLink] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [isAnalyticsCopied, setIsAnalyticsCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -57,38 +60,42 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
     setIsLoading(true);
     onPlanSelect(currentPlan);
     
-    const eventId = Math.random().toString(36).substring(2, 10); // Generate a unique ID for the event
+    const eventId = Math.random().toString(36).substring(2, 10); 
 
     try {
-      // Simulate payment for non-free plans
       if (currentPlan.price > 0) {
         toast({
           title: "Payment Required",
           description: `Simulating Stripe checkout for ${currentPlan.name} plan ($${currentPlan.price}). Please wait...`,
           duration: 3000,
         });
-        // Simulate a delay for payment processing
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
 
-      // Save to Firestore
-      const eventData = {
+      const eventDataToSave = {
         templateId: selectedTemplate.id,
         templateName: selectedTemplate.name,
-        eventDetails: eventDetails,
+        eventDetails: { // Ensure all fields, including new RSVP ones, are saved
+            ...eventDetails,
+            enableRsvp: eventDetails.enableRsvp ?? false,
+            customRsvpQuestion: eventDetails.customRsvpQuestion ?? '',
+        },
         planId: currentPlan.id,
         planName: currentPlan.name,
         createdAt: serverTimestamp(),
         eventId: eventId,
       };
-      await setDoc(doc(db, "invites", eventId), eventData);
+      await setDoc(doc(db, "invites", eventId), eventDataToSave);
 
-      // Use relative path for Next.js Link component
       const newGeneratedLink = `/invite/${eventId}`;
       setGeneratedLink(newGeneratedLink);
       
+      if (eventDetails.enableRsvp) {
+        setAnalyticsLink(`/analytics/${eventId}`);
+      }
+      
       toast({
-        title: "Link Generated & Saved!",
+        title: "Link Generated &amp; Saved!",
         description: "Your event invitation link is ready and saved to Firestore.",
       });
 
@@ -104,45 +111,74 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
     }
   };
 
-  const handleCopyToClipboard = () => {
-    if (generatedLink) {
-      // For copying the full URL
-      const fullUrl = `${window.location.origin}${generatedLink}`;
+  const handleCopyToClipboard = (linkToCopy: string, type: 'invite' | 'analytics') => {
+    if (linkToCopy) {
+      const fullUrl = `${window.location.origin}${linkToCopy}`;
       navigator.clipboard.writeText(fullUrl).then(() => {
-        setIsCopied(true);
-        toast({ title: "Copied!", description: "Full link copied to clipboard." });
-        setTimeout(() => setIsCopied(false), 2000);
+        if (type === 'invite') {
+          setIsCopied(true);
+          toast({ title: "Copied!", description: "Invite link copied to clipboard." });
+          setTimeout(() => setIsCopied(false), 2000);
+        } else {
+          setIsAnalyticsCopied(true);
+          toast({ title: "Copied!", description: "Analytics link copied to clipboard." });
+          setTimeout(() => setIsAnalyticsCopied(false), 2000);
+        }
       }).catch(err => {
-        toast({ title: "Error", description: "Failed to copy link.", variant: "destructive" });
+        toast({ title: "Error", description: `Failed to copy ${type} link.`, variant: "destructive" });
       });
     }
   };
 
   if (generatedLink) {
     const fullDisplayUrl = `${window.location.origin}${generatedLink}`;
+    const fullAnalyticsDisplayUrl = analyticsLink ? `${window.location.origin}${analyticsLink}` : null;
+
     return (
       <section className="animate-fadeIn text-center max-w-md mx-auto">
         <Card className="bg-card shadow-xl">
           <CardHeader>
-            <CardTitle className="text-3xl font-bold font-headline text-primary">Your Link is Ready!</CardTitle>
-            <CardDescription className="text-muted-foreground">Share this link with your guests.</CardDescription>
+            <CardTitle className="text-3xl font-bold font-headline text-primary">Your Links are Ready!</CardTitle>
+            <CardDescription className="text-muted-foreground">Share these links as needed.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Input type="text" value={fullDisplayUrl} readOnly className="flex-grow" />
-              <Button onClick={handleCopyToClipboard} variant="outline" size="icon" className="border-accent text-accent hover:bg-accent/10">
-                {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                <span className="sr-only">Copy link</span>
+            <div>
+              <Label htmlFor="inviteLinkInput" className="text-sm font-medium text-muted-foreground block text-left mb-1">Invite Link</Label>
+              <div className="flex items-center space-x-2">
+                <Input id="inviteLinkInput" type="text" value={fullDisplayUrl} readOnly className="flex-grow" />
+                <Button onClick={() => generatedLink && handleCopyToClipboard(generatedLink, 'invite')} variant="outline" size="icon" className="border-accent text-accent hover:bg-accent/10">
+                  {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  <span className="sr-only">Copy invite link</span>
+                </Button>
+              </div>
+              <Button variant="link" asChild className="text-primary hover:text-primary/80 mt-1 px-0">
+                <Link href={generatedLink} target="_blank" rel="noopener noreferrer">
+                  Preview Invite <ExternalLink className="ml-1 h-4 w-4" />
+                </Link>
               </Button>
             </div>
+
+            {analyticsLink && fullAnalyticsDisplayUrl && (
+              <div>
+                <Label htmlFor="analyticsLinkInput" className="text-sm font-medium text-muted-foreground block text-left mb-1">Analytics Link</Label>
+                <div className="flex items-center space-x-2">
+                  <Input id="analyticsLinkInput" type="text" value={fullAnalyticsDisplayUrl} readOnly className="flex-grow" />
+                  <Button onClick={() => analyticsLink && handleCopyToClipboard(analyticsLink, 'analytics')} variant="outline" size="icon" className="border-accent text-accent hover:bg-accent/10">
+                    {isAnalyticsCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    <span className="sr-only">Copy analytics link</span>
+                  </Button>
+                </div>
+                <Button variant="link" asChild className="text-primary hover:text-primary/80 mt-1 px-0">
+                   <Link href={analyticsLink} target="_blank" rel="noopener noreferrer">
+                    View Analytics <BarChart3 className="ml-1 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            )}
+            
             <p className="text-sm text-muted-foreground">
               Selected Plan: <span className="font-semibold text-accent">{currentPlan?.name}</span> ({currentPlan?.visits})
             </p>
-            <Button variant="link" asChild className="text-primary hover:text-primary/80">
-              <a href={generatedLink} target="_blank" rel="noopener noreferrer">
-                Preview Your Invite <ExternalLink className="ml-1 h-4 w-4" />
-              </a>
-            </Button>
           </CardContent>
           <CardFooter>
             <Button onClick={() => window.location.reload()} className="w-full bg-primary text-primary-foreground">
@@ -156,7 +192,7 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
 
   return (
     <section className="animate-fadeIn">
-      <h2 className="text-3xl font-bold font-headline text-center mb-2 text-primary">Step 3: Choose Plan & Generate Link</h2>
+      <h2 className="text-3xl font-bold font-headline text-center mb-2 text-primary">Step 3: Choose Plan &amp; Generate Link</h2>
       <p className="text-center text-muted-foreground mb-10">Select a plan based on your expected number of invitation views.</p>
 
       <RadioGroup
@@ -204,10 +240,10 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
           disabled={!currentPlan || isLoading}
         >
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isLoading ? 'Processing...' : (currentPlan?.price && currentPlan.price > 0 ? `Pay $${currentPlan.price} & Generate Link` : 'Generate Free Link')}
+          {isLoading ? 'Processing...' : (currentPlan?.price && currentPlan.price > 0 ? `Pay $${currentPlan.price} &amp; Generate Link` : 'Generate Link')}
         </Button>
          <p className="mt-4 text-xs text-muted-foreground">
-            You will be redirected to Stripe for payment if applicable. Firestore saving is now active.
+            Payment simulation and Firestore saving are active.
           </p>
       </div>
 
@@ -218,9 +254,12 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
         <CardContent className="text-sm space-y-1 text-muted-foreground">
           <p><strong>Template:</strong> {selectedTemplate?.name}</p>
           <p><strong>Event Name:</strong> {eventDetails.eventName}</p>
-          <p><strong>Date & Time:</strong> {eventDetails.eventDate} at {eventDetails.eventTime}</p>
+          <p><strong>Date &amp; Time:</strong> {eventDetails.eventDate} at {eventDetails.eventTime}</p>
           <p><strong>Invite Color:</strong> <span style={{display: 'inline-block', width: '12px', height: '12px', backgroundColor: eventDetails.primaryColor, border: '1px solid var(--border)'}}></span> {eventDetails.primaryColor}</p>
           <p><strong>Font:</strong> {eventDetails.fontStyle}</p>
+          {eventDetails.enableRsvp && (
+            <p><strong>RSVP Enabled:</strong> Yes {eventDetails.customRsvpQuestion ? `(Q: "${eventDetails.customRsvpQuestion}")` : ''}</p>
+          )}
         </CardContent>
       </Card>
     </section>
@@ -228,3 +267,4 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
 };
 
 export default ChoosePlanStep;
+    

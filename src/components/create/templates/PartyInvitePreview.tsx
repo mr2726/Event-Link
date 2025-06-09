@@ -3,7 +3,7 @@
 
 import type { Template } from '@/app/create/page';
 import type { EventDetailsFormData } from '../CustomizeDetailsStep';
-import { Gift, Zap, Music, Pizza, Twitter, Linkedin, Send, Video, Twitch, Youtube, Link as LinkIcon } from 'lucide-react';
+import { Gift, Zap, Music, Pizza, Twitter, Linkedin, Send, Video, Twitch, Youtube, Link as LinkIcon, Users } from 'lucide-react';
 import { WhatsappIcon } from '@/components/icons/WhatsappIcon';
 import { format, parseISO } from 'date-fns';
 
@@ -27,11 +27,13 @@ const PartyInvitePreview: React.FC<PartyInvitePreviewProps> = ({ template, formD
     eventDate = "2025-09-05", 
     eventTime = "20:00", 
     eventLocation = "The Usual Spot!",
-    eventDescription = "Get ready for an unforgettable night!", // Added default
+    eventDescription = "Get ready for an unforgettable night!", 
     primaryColor = '#DB2777', 
     fontStyle = 'Montserrat',
     optionalLink,
-    twitterLink, linkedinLink, telegramLink, whatsappLink, googleMeetLink, zoomLink, twitchLink, youtubeLink
+    twitterLink, linkedinLink, telegramLink, whatsappLink, googleMeetLink, zoomLink, twitchLink, youtubeLink,
+    enableRsvp = false, 
+    customRsvpQuestion = '',
   } = formData || {};
   
   const displayDate = eventDate && !isNaN(Date.parse(eventDate)) ? format(parseISO(eventDate), "MMM d") : "Date";
@@ -39,7 +41,7 @@ const PartyInvitePreview: React.FC<PartyInvitePreviewProps> = ({ template, formD
 
   const safeFontStyle = fontStyle || 'Montserrat';
   const safePrimaryColor = primaryColor || '#DB2777';
-  const yellowAccent = '#FDE047'; // Maintained for high contrast on dark party theme
+  const yellowAccent = '#FDE047'; 
 
   return (
     <div 
@@ -89,6 +91,12 @@ const PartyInvitePreview: React.FC<PartyInvitePreviewProps> = ({ template, formD
               <LinkIcon className="h-2.5 w-2.5" /> Main Party Link
             </a>
         )}
+        {enableRsvp && (
+            <div className="mt-1 text-[9px] p-1 rounded" style={{ backgroundColor: `${yellowAccent}33`, color: yellowAccent }}>
+              <Users className="inline h-2.5 w-2.5 mr-0.5" />
+              RSVP OPEN! {customRsvpQuestion ? ` (Q: "${customRsvpQuestion.substring(0,15)}...")` : ""}
+            </div>
+        )}
       </div>
       
       <div className="mt-auto z-10 w-full text-center space-y-1.5">
@@ -111,5 +119,4 @@ const PartyInvitePreview: React.FC<PartyInvitePreviewProps> = ({ template, formD
 };
 
 export default PartyInvitePreview;
-
     

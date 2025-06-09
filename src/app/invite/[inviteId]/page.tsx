@@ -1,8 +1,10 @@
 
+'use client'; 
+
+import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useParams, notFound } from 'next/navigation';
 
 import WeddingInvitePreview from '@/components/create/templates/WeddingInvitePreview';
 import CorporateInvitePreview from '@/components/create/templates/CorporateInvitePreview';
@@ -10,62 +12,27 @@ import MeetupInvitePreview from '@/components/create/templates/MeetupInvitePrevi
 import PartyInvitePreview from '@/components/create/templates/PartyInvitePreview';
 import ConferenceInvitePreview from '@/components/create/templates/ConferenceInvitePreview';
 import type { EventDetailsFormData } from '@/components/create/CustomizeDetailsStep';
-import type { Template } from '@/app/create/page'; // Re-using template type for structure
+import type { Template } from '@/app/create/page'; 
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
-interface InvitePageProps {
-  params: {
-    inviteId: string;
-  };
-}
-
-// Helper function to get full template details (mocked for now, as templates array isn't global)
-// In a real app, you might fetch this from a 'templates' collection or have it statically defined
-const getTemplateDetailsById = (templateId: string): Partial<Template> => {
-    // This is a simplified version. Ideally, the full template object or its relevant parts
-    // (like previewImageUrl if needed for meta tags, or specific aiHint) would be fetched
-    // or reconstructed. For rendering, templateId and eventDetails are primary.
-    return { id: templateId, name: `Template ${templateId}` , previewImageUrl: '', description: '', aiHint: '' };
-}
-
-
-export async function generateMetadata({ params }: InvitePageProps): Promise<Metadata> {
-  const { inviteId } = params;
-  const docRef = doc(db, 'invites', inviteId);
-  const docSnap = await getDoc(docRef);
-
-  if (!docSnap.exists()) {
-    return {
-      title: 'Invite Not Found',
-    };
-  }
-  const eventData = docSnap.data();
-  const eventName = eventData?.eventDetails?.eventName || 'Event Invitation';
-  
-  return {
-    title: `${eventName} - EventLink Invitation`,
-    description: `You're invited to ${eventName}. View the details here.`,
-    // openGraph: {
-    //   title: `${eventName} - EventLink Invitation`,
-    //   description: `You're invited to ${eventName}.`,
-    //   images: [eventData?.selectedTemplate?.previewImageUrl || 'https://eventlink.to/default-og-image.png'],
-    // },
-  };
-}
-
-
-const renderInviteTemplate = (templateId: string, eventDetails: EventDetailsFormData) => {
+const renderInviteTemplate = (templateId: string, eventDetails: EventDetailsFormData, isFullPage: boolean = true) => {
   const dummyTemplate: Template = { 
       id: templateId, 
       name: 'Custom Event', 
-      previewImageUrl: 'https://placehold.co/600x800.png', // Not used directly in these previews
+      previewImageUrl: 'https://placehold.co/600x800.png',
       description: 'Event invite',
       aiHint: 'event'
   };
 
-  // We wrap the preview in a div to control its max-width for a better "page" feel
-  // The previews themselves are designed to be aspect-[3/4] and might need adjustment for full page
-  // For now, we'll let them expand but cap width.
-  const containerClasses = "w-full max-w-2xl mx-auto shadow-2xl rounded-lg overflow-hidden";
+  const containerClasses = isFullPage 
+    ? "w-full max-w-2xl mx-auto shadow-2xl rounded-lg overflow-hidden" 
+    : "w-full h-auto object-cover rounded-md border border-border overflow-hidden shadow-lg";
 
   switch (templateId) {
     case 'wedding':
@@ -83,27 +50,105 @@ const renderInviteTemplate = (templateId: string, eventDetails: EventDetailsForm
   }
 };
 
+export default function InvitePage() {
+  const params = useParams();
+  const inviteId = params.inviteId as string;
 
-export default async function InvitePage({ params }: InvitePageProps) {
-  const { inviteId } = params;
+  const [eventData, setEventData] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  const [rsvpName, setRsvpName] = useState('');
+  const [rsvpEmail, setRsvpEmail] = useState('');
+  const [rsvpCustomAnswer, setRsvpCustomAnswer] = useState('');
+  const [isSubmittingRsvp, setIsSubmittingRsvp] = useState(false);
+  const [rsvpSubmitted, setRsvpSubmitted] = useState(false);
+  const { toast } = useToast();
 
-  if (!inviteId) {
-    notFound();
+  useEffect(() => {
+    if (!inviteId) {
+      setLoading(false);
+      setError("Invite ID is missing.");
+      return;
+    }
+
+    const fetchEventData = async () => {
+      try {
+        const docRef = doc(db, "invites", inviteId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setEventData(data);
+          if (data?.eventDetails?.eventName) {
+            document.title = `${data.eventDetails.eventName} - EventLink Invitation`;
+          }
+        } else {
+          setError("Invite not found.");
+        }
+      } catch (e) {
+        console.error("Error fetching event data:", e);
+        setError("Failed to load event details.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEventData();
+  }, [inviteId]);
+
+  const handleRsvpSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!eventData?.eventDetails?.enableRsvp || !inviteId) return;
+
+    setIsSubmittingRsvp(true);
+    try {
+      const responsesCollectionRef = collection(db, "invites", inviteId, "responses");
+      await addDoc(responsesCollectionRef, {
+        name: rsvpName,
+        email: rsvpEmail,
+        customAnswer: rsvpCustomAnswer || "", // Ensure empty string if not provided
+        submittedAt: serverTimestamp(),
+      });
+      setRsvpSubmitted(true);
+      toast({
+        title: "RSVP Submitted!",
+        description: "Thank you for your response.",
+      });
+    } catch (err) {
+      console.error("Error submitting RSVP:", err);
+      toast({
+        title: "RSVP Submission Failed",
+        description: "Could not submit your RSVP. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingRsvp(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading Invite...</p>
+      </div>
+    );
   }
 
-  const docRef = doc(db, "invites", inviteId);
-  const docSnap = await getDoc(docRef);
-
-  if (!docSnap.exists()) {
-    notFound();
+  if (error || !eventData) {
+     return (
+        <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
+            <h1 className="text-3xl font-bold text-primary mb-4">Error</h1>
+            <p className="text-muted-foreground">{error || "Invite data could not be loaded."}</p>
+        </div>
+    );
   }
-
-  const eventData = docSnap.data();
+  
   const templateId = eventData?.templateId as string;
   const eventDetails = eventData?.eventDetails as EventDetailsFormData;
 
   if (!templateId || !eventDetails) {
-    // This case should ideally be caught by notFound earlier if docSnap.exists() is false
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
             <h1 className="text-3xl font-bold text-primary mb-4">Error</h1>
@@ -114,13 +159,65 @@ export default async function InvitePage({ params }: InvitePageProps) {
   
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4 md:p-8">
-       {/* 
-        A simple container for the invite.
-        The preview components are designed for aspect-[3/4].
-        We might need dedicated "display" components for a true full-page invite feel.
-        For now, centering the preview component.
-      */}
-      {renderInviteTemplate(templateId, eventDetails)}
+      {renderInviteTemplate(templateId, eventDetails, true)}
+
+      {eventDetails.enableRsvp && (
+        <Card className="w-full max-w-2xl mt-8 bg-card shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold font-headline text-primary">
+              {rsvpSubmitted ? "Thank You!" : "RSVP Here"}
+            </CardTitle>
+            {!rsvpSubmitted && <CardDescription className="text-muted-foreground">Let us know if you can make it.</CardDescription>}
+          </CardHeader>
+          <CardContent>
+            {rsvpSubmitted ? (
+              <p className="text-center text-accent">Your response has been recorded.</p>
+            ) : (
+              <form onSubmit={handleRsvpSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="rsvpName" className="text-muted-foreground">Your Name</Label>
+                  <Input 
+                    id="rsvpName" 
+                    type="text" 
+                    value={rsvpName} 
+                    onChange={(e) => setRsvpName(e.target.value)} 
+                    required 
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="rsvpEmail" className="text-muted-foreground">Your Email</Label>
+                  <Input 
+                    id="rsvpEmail" 
+                    type="email" 
+                    value={rsvpEmail} 
+                    onChange={(e) => setRsvpEmail(e.target.value)} 
+                    required 
+                    className="mt-1"
+                  />
+                </div>
+                {eventDetails.customRsvpQuestion && (
+                  <div>
+                    <Label htmlFor="rsvpCustomAnswer" className="text-muted-foreground">{eventDetails.customRsvpQuestion}</Label>
+                    <Textarea 
+                      id="rsvpCustomAnswer" 
+                      value={rsvpCustomAnswer} 
+                      onChange={(e) => setRsvpCustomAnswer(e.target.value)} 
+                      rows={3}
+                      className="mt-1"
+                      placeholder="Your answer (optional)"
+                    />
+                  </div>
+                )}
+                <Button type="submit" className="w-full bg-accent text-accent-foreground" disabled={isSubmittingRsvp}>
+                  {isSubmittingRsvp && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Submit RSVP
+                </Button>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <footer className="mt-12 text-center">
         <p className="text-sm text-muted-foreground">
@@ -130,3 +227,4 @@ export default async function InvitePage({ params }: InvitePageProps) {
     </div>
   );
 }
+    
