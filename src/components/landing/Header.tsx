@@ -12,7 +12,7 @@ export function Header() {
           </svg>
           <span className="font-bold text-xl font-headline">EventLink</span>
         </Link>
-        <nav className="flex items-center gap-4">
+        <nav className="flex items-center gap-4 px-5">
           <Button variant="ghost" asChild>
             <Link href="#features">Features</Link>
           </Button>
