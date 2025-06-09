@@ -8,10 +8,43 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Eye } from 'lucide-react';
 
+import WeddingInvitePreview from './templates/WeddingInvitePreview';
+import CorporateInvitePreview from './templates/CorporateInvitePreview';
+import MeetupInvitePreview from './templates/MeetupInvitePreview';
+import PartyInvitePreview from './templates/PartyInvitePreview';
+import ConferenceInvitePreview from './templates/ConferenceInvitePreview';
+
 interface SelectTemplateStepProps {
   templates: Template[];
   onTemplateSelect: (template: Template) => void;
 }
+
+const renderTemplatePreview = (template: Template) => {
+  switch (template.id) {
+    case 'wedding':
+      return <WeddingInvitePreview template={template} />;
+    case 'corporate':
+      return <CorporateInvitePreview template={template} />;
+    case 'meetup':
+      return <MeetupInvitePreview template={template} />;
+    case 'party':
+      return <PartyInvitePreview template={template} />;
+    case 'conference':
+      return <ConferenceInvitePreview template={template} />;
+    default:
+      // Fallback to original image if no specific preview component is found
+      return (
+        <Image
+          src={template.previewImageUrl}
+          alt={template.name}
+          width={600}
+          height={800}
+          className="w-full h-auto aspect-[3/4] object-cover rounded-t-lg"
+          data-ai-hint={template.aiHint}
+        />
+      );
+  }
+};
 
 const SelectTemplateStep: React.FC<SelectTemplateStepProps> = ({ templates, onTemplateSelect }) => {
   return (
@@ -23,14 +56,7 @@ const SelectTemplateStep: React.FC<SelectTemplateStepProps> = ({ templates, onTe
         {templates.map((template) => (
           <Card key={template.id} className="flex flex-col bg-card hover:shadow-primary/20 transition-shadow duration-300">
             <CardHeader className="p-0">
-              <Image
-                src={template.previewImageUrl}
-                alt={template.name}
-                width={600}
-                height={800}
-                className="w-full h-auto aspect-[3/4] object-cover rounded-t-lg"
-                data-ai-hint={template.aiHint}
-              />
+              {renderTemplatePreview(template)}
             </CardHeader>
             <CardContent className="p-4 flex-grow">
               <CardTitle className="text-lg font-semibold font-headline text-foreground">{template.name}</CardTitle>
@@ -59,7 +85,7 @@ const SelectTemplateStep: React.FC<SelectTemplateStepProps> = ({ templates, onTe
                   </DialogHeader>
                   <div className="my-4">
                     <Image
-                      src={template.previewImageUrl}
+                      src={template.previewImageUrl} // Dialog still uses placeholder image
                       alt={`Preview of ${template.name}`}
                       width={600}
                       height={800}
