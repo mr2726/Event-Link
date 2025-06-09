@@ -57,7 +57,7 @@ export function Features() {
                 {feature.integrations && (
                   <div className="mt-4 space-y-2">
                     <p className="text-sm font-medium text-foreground">Integrates with:</p>
-                    <div className="flex space-x-3">
+                    <div className="flex flex-wrap gap-2">
                       {feature.integrations.map(integration => (
                         <div key={integration.name} className="flex items-center gap-1.5 p-1.5 rounded-md bg-muted" title={integration.name}>
                           {integration.icon}
