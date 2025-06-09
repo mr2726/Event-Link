@@ -1,6 +1,8 @@
+
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
+import Link from 'next/link';
 
 const pricingTiers = [
   {
@@ -79,9 +81,10 @@ export function Pricing() {
               </CardContent>
               <CardFooter>
                 <Button 
+                  asChild
                   className={`w-full ${tier.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-accent text-accent-foreground hover:bg-accent/90'}`}
                 >
-                  {tier.cta}
+                  <Link href="/create">{tier.cta}</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -94,3 +97,4 @@ export function Pricing() {
     </section>
   );
 }
+
