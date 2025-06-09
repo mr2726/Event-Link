@@ -8,13 +8,9 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label'; // This import seems unused, can be removed if not used elsewhere
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-// Removed Image import as we'll use component previews
-// import Image from 'next/image';
 
-// Import the template preview components
 import WeddingInvitePreview from './templates/WeddingInvitePreview';
 import CorporateInvitePreview from './templates/CorporateInvitePreview';
 import MeetupInvitePreview from './templates/MeetupInvitePreview';
@@ -22,11 +18,11 @@ import PartyInvitePreview from './templates/PartyInvitePreview';
 import ConferenceInvitePreview from './templates/ConferenceInvitePreview';
 
 const eventDetailsSchema = z.object({
-  eventName: z.string().min(3, { message: "Event name must be at least 3 characters." }),
-  eventDate: z.string().refine((date) => !isNaN(Date.parse(date)), { message: "Invalid date format." }),
-  eventTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Invalid time format (HH:MM)." }),
-  eventLocation: z.string().min(3, { message: "Location must be at least 3 characters." }),
-  eventDescription: z.string().min(10, { message: "Description must be at least 10 characters." }).max(500, {message: "Description must be 500 characters or less."}),
+  eventName: z.string().min(3, { message: "Event name must be at least 3 characters." }).default("My Awesome Event"),
+  eventDate: z.string().refine((date) => !isNaN(Date.parse(date)), { message: "Invalid date format." }).default("2025-12-31"),
+  eventTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Invalid time format (HH:MM)." }).default("19:00"),
+  eventLocation: z.string().min(3, { message: "Location must be at least 3 characters." }).default("The Grand Hall"),
+  eventDescription: z.string().min(10, { message: "Description must be at least 10 characters." }).max(500, {message: "Description must be 500 characters or less."}).default("Join us for a fantastic celebration!"),
   optionalLink: z.string().url({ message: "Invalid URL." }).optional().or(z.literal('')),
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, { message: "Invalid hex color."}).default('#BE29FF'),
   fontStyle: z.string().default('Space Grotesk'),
@@ -40,30 +36,21 @@ interface CustomizeDetailsStepProps {
   initialData?: EventDetailsFormData | null;
 }
 
-// Helper function to render the selected template preview
-const renderSelectedTemplatePreview = (template: Template) => {
-  // Ensure the preview components are styled to fit the container
-  // The template preview components themselves handle their aspect ratio and basic styling.
-  // We might need a wrapper div if specific sizing is needed here.
-  const previewContainerClasses = "w-full h-auto object-cover rounded-md border border-border overflow-hidden";
+const renderSelectedTemplatePreview = (template: Template, formData: EventDetailsFormData) => {
+  const previewContainerClasses = "w-full h-auto object-cover rounded-md border border-border overflow-hidden shadow-lg";
 
   switch (template.id) {
     case 'wedding':
-      return <div className={previewContainerClasses}><WeddingInvitePreview template={template} /></div>;
+      return <div className={previewContainerClasses}><WeddingInvitePreview template={template} formData={formData} /></div>;
     case 'corporate':
-      return <div className={previewContainerClasses}><CorporateInvitePreview template={template} /></div>;
+      return <div className={previewContainerClasses}><CorporateInvitePreview template={template} formData={formData} /></div>;
     case 'meetup':
-      return <div className={previewContainerClasses}><MeetupInvitePreview template={template} /></div>;
+      return <div className={previewContainerClasses}><MeetupInvitePreview template={template} formData={formData} /></div>;
     case 'party':
-      return <div className={previewContainerClasses}><PartyInvitePreview template={template} /></div>;
+      return <div className={previewContainerClasses}><PartyInvitePreview template={template} formData={formData} /></div>;
     case 'conference':
-      return <div className={previewContainerClasses}><ConferenceInvitePreview template={template} /></div>;
+      return <div className={previewContainerClasses}><ConferenceInvitePreview template={template} formData={formData} /></div>;
     default:
-      // Fallback if a new template ID is added without a corresponding preview component
-      // This could be a placeholder or a simple message.
-      // For now, let's render the placeholder image as a fallback.
-      // (Note: This requires re-importing Image from 'next/image' if this fallback is desired)
-      // For simplicity, we'll return a simple div or null if next/image is not re-imported.
       return <div className="w-full aspect-[3/4] bg-muted flex items-center justify-center text-sm text-muted-foreground rounded-md border border-border">No preview available for this template.</div>;
   }
 };
@@ -72,17 +59,10 @@ const renderSelectedTemplatePreview = (template: Template) => {
 const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, onSubmit, initialData }) => {
   const form = useForm<EventDetailsFormData>({
     resolver: zodResolver(eventDetailsSchema),
-    defaultValues: initialData || {
-      eventName: '',
-      eventDate: '',
-      eventTime: '',
-      eventLocation: '',
-      eventDescription: '',
-      optionalLink: '',
-      primaryColor: '#BE29FF', // Default to PRD primary
-      fontStyle: 'Space Grotesk',
-    },
+    defaultValues: initialData || eventDetailsSchema.parse({}), // Use schema defaults
   });
+
+  const watchedValues = form.watch();
 
   const handleSubmit: SubmitHandler<EventDetailsFormData> = (data) => {
     onSubmit(data);
@@ -96,11 +76,10 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
       </p>
       
       <div className="grid md:grid-cols-3 gap-8 items-start">
-        <div className="md:col-span-1 p-4 bg-card rounded-lg shadow-lg">
-            <h3 className="text-xl font-semibold font-headline text-foreground mb-3">Template Preview</h3>
-            {/* Replace Image with the dynamic template preview */}
-            {renderSelectedTemplatePreview(template)}
-            <p className="text-sm text-muted-foreground mt-2">{template.description}</p>
+        <div className="md:col-span-1 p-1 bg-card rounded-lg shadow-lg sticky top-24">
+            <h3 className="text-xl font-semibold font-headline text-foreground mb-3 px-3 pt-3">Live Preview</h3>
+            {renderSelectedTemplatePreview(template, watchedValues)}
+            <p className="text-sm text-muted-foreground mt-2 px-3 pb-3">{template.description}</p>
         </div>
 
         <div className="md:col-span-2">
@@ -226,7 +205,7 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
                           <SelectItem value="Times New Roman">Times New Roman (Classic Serif)</SelectItem>
                           <SelectItem value="Montserrat">Montserrat (Stylish Sans)</SelectItem>
                           <SelectItem value="Playfair Display">Playfair Display (Elegant Serif)</SelectItem>
-                           <SelectItem value="Parisienne">Parisienne (Cursive Script)</SelectItem>
+                          <SelectItem value="Parisienne">Parisienne (Cursive Script)</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>Select a font for your invite's text.</FormDescription>
