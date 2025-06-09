@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Check, Copy, ExternalLink } from 'lucide-react';
+import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export interface Plan {
   id: string;
@@ -38,53 +40,77 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
   const [selectedPlanId, setSelectedPlanId] = useState<string>(plans.find(p => p.isPopular)?.id || 'starter');
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const currentPlan = plans.find(p => p.id === selectedPlanId);
 
-  const handleGenerateLink = () => {
-    if (!currentPlan) {
+  const handleGenerateLink = async () => {
+    if (!currentPlan || !selectedTemplate) {
       toast({
         title: "Error",
-        description: "Please select a plan first.",
+        description: "Please select a plan and ensure template and details are set.",
         variant: "destructive",
       });
       return;
     }
+    setIsLoading(true);
     onPlanSelect(currentPlan);
     
-    // Simulate payment for non-free plans
-    if (currentPlan.price > 0) {
-      toast({
-        title: "Payment Required",
-        description: `Simulating Stripe checkout for ${currentPlan.name} plan ($${currentPlan.price}).`,
-        duration: 3000,
-      });
-      // Simulate a delay for payment processing
-      setTimeout(() => {
-        const pseudoRandomId = Math.random().toString(36).substring(2, 8);
-        setGeneratedLink(`https://eventlink.to/${pseudoRandomId}`);
+    const eventId = Math.random().toString(36).substring(2, 10); // Generate a unique ID for the event
+
+    try {
+      // Simulate payment for non-free plans
+      if (currentPlan.price > 0) {
         toast({
-          title: "Link Generated!",
-          description: "Your event invitation link is ready.",
+          title: "Payment Required",
+          description: `Simulating Stripe checkout for ${currentPlan.name} plan ($${currentPlan.price}). Please wait...`,
+          duration: 3000,
         });
-      }, 2000);
-    } else {
-      // Instantly generate for free plan
-      const pseudoRandomId = Math.random().toString(36).substring(2, 8);
-      setGeneratedLink(`https://eventlink.to/${pseudoRandomId}`);
+        // Simulate a delay for payment processing
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+
+      // Save to Firestore
+      const eventData = {
+        templateId: selectedTemplate.id,
+        templateName: selectedTemplate.name,
+        eventDetails: eventDetails,
+        planId: currentPlan.id,
+        planName: currentPlan.name,
+        createdAt: serverTimestamp(),
+        eventId: eventId,
+      };
+      await setDoc(doc(db, "invites", eventId), eventData);
+
+      // Use relative path for Next.js Link component
+      const newGeneratedLink = `/invite/${eventId}`;
+      setGeneratedLink(newGeneratedLink);
+      
       toast({
-        title: "Link Generated!",
-        description: "Your event invitation link is ready.",
+        title: "Link Generated & Saved!",
+        description: "Your event invitation link is ready and saved to Firestore.",
       });
+
+    } catch (error) {
+      console.error("Error generating link or saving to Firestore: ", error);
+      toast({
+        title: "Generation Failed",
+        description: "There was an error generating your link or saving data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleCopyToClipboard = () => {
     if (generatedLink) {
-      navigator.clipboard.writeText(generatedLink).then(() => {
+      // For copying the full URL
+      const fullUrl = `${window.location.origin}${generatedLink}`;
+      navigator.clipboard.writeText(fullUrl).then(() => {
         setIsCopied(true);
-        toast({ title: "Copied!", description: "Link copied to clipboard." });
+        toast({ title: "Copied!", description: "Full link copied to clipboard." });
         setTimeout(() => setIsCopied(false), 2000);
       }).catch(err => {
         toast({ title: "Error", description: "Failed to copy link.", variant: "destructive" });
@@ -93,6 +119,7 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
   };
 
   if (generatedLink) {
+    const fullDisplayUrl = `${window.location.origin}${generatedLink}`;
     return (
       <section className="animate-fadeIn text-center max-w-md mx-auto">
         <Card className="bg-card shadow-xl">
@@ -102,7 +129,7 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-2">
-              <Input type="text" value={generatedLink} readOnly className="flex-grow" />
+              <Input type="text" value={fullDisplayUrl} readOnly className="flex-grow" />
               <Button onClick={handleCopyToClipboard} variant="outline" size="icon" className="border-accent text-accent hover:bg-accent/10">
                 {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 <span className="sr-only">Copy link</span>
@@ -174,16 +201,16 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
           onClick={handleGenerateLink} 
           size="lg" 
           className="w-full max-w-xs mx-auto bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/30 transition-all duration-300 hover:shadow-accent/50 transform hover:scale-105"
-          disabled={!currentPlan}
+          disabled={!currentPlan || isLoading}
         >
-          {currentPlan?.price && currentPlan.price > 0 ? `Pay $${currentPlan.price} & Generate Link` : 'Generate Free Link'}
+          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isLoading ? 'Processing...' : (currentPlan?.price && currentPlan.price > 0 ? `Pay $${currentPlan.price} & Generate Link` : 'Generate Free Link')}
         </Button>
          <p className="mt-4 text-xs text-muted-foreground">
-            You will be redirected to Stripe for payment if applicable.
+            You will be redirected to Stripe for payment if applicable. Firestore saving is now active.
           </p>
       </div>
 
-      {/* Summary of selected options - for context */}
       <Card className="mt-12 bg-card/50 border-dashed border-border">
         <CardHeader>
           <CardTitle className="text-lg font-headline text-muted-foreground">Your Event Setup (Summary)</CardTitle>
