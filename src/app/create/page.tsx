@@ -11,8 +11,7 @@ import { ArrowLeft, MessageSquare } from 'lucide-react';
 import SelectTemplateStep from '@/components/create/SelectTemplateStep';
 import CustomizeDetailsStep, { type EventDetailsFormData } from '@/components/create/CustomizeDetailsStep';
 import ChoosePlanStep, { type Plan } from '@/components/create/ChoosePlanStep';
-// import Image from 'next/image'; // Image import is not active
-import { Toaster } from '@/components/ui/toaster'; // Ensure Toaster is available
+import { Toaster } from '@/components/ui/toaster'; 
 
 export interface Template {
   id: string;
@@ -80,7 +79,7 @@ const CreateEventPage: NextPage = () => {
 
       <div className="min-h-screen bg-background text-foreground flex flex-col">
         {/* Page Header */}
-        <header className="py-8 bg-card shadow-md relative overflow-hidden">
+        <header className="py-8 bg-card shadow-md relative">
           <div className="container mx-auto px-4 md:px-6 text-center">
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary relative">
               Create Your Event Invite Now
