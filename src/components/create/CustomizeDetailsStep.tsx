@@ -26,6 +26,14 @@ const eventDetailsSchema = z.object({
   optionalLink: z.string().url({ message: "Invalid URL." }).optional().or(z.literal('')).default(''),
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, { message: "Invalid hex color."}).default('#BE29FF'),
   fontStyle: z.string().default('Space Grotesk'),
+  twitterLink: z.string().url({ message: "Invalid Twitter URL." }).optional().or(z.literal('')).default(''),
+  linkedinLink: z.string().url({ message: "Invalid LinkedIn URL." }).optional().or(z.literal('')).default(''),
+  telegramLink: z.string().url({ message: "Invalid Telegram URL." }).optional().or(z.literal('')).default(''),
+  whatsappLink: z.string().url({ message: "Invalid WhatsApp URL (e.g., https://wa.me/1234567890)." }).optional().or(z.literal('')).default(''),
+  googleMeetLink: z.string().url({ message: "Invalid Google Meet URL." }).optional().or(z.literal('')).default(''),
+  zoomLink: z.string().url({ message: "Invalid Zoom URL." }).optional().or(z.literal('')).default(''),
+  twitchLink: z.string().url({ message: "Invalid Twitch URL." }).optional().or(z.literal('')).default(''),
+  youtubeLink: z.string().url({ message: "Invalid YouTube URL." }).optional().or(z.literal('')).default(''),
 });
 
 export type EventDetailsFormData = z.infer<typeof eventDetailsSchema>;
@@ -64,7 +72,7 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
 
   const watchedValues = form.watch();
 
-  const handleSubmit: SubmitHandler<EventDetailsFormData> = (data) => {
+  const handleSubmitForm: SubmitHandler<EventDetailsFormData> = (data) => {
     onSubmit(data);
   };
 
@@ -84,7 +92,7 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
 
         <div className="md:col-span-2">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 p-6 bg-card rounded-lg shadow-lg">
+            <form onSubmit={form.handleSubmit(handleSubmitForm)} className="space-y-6 p-6 bg-card rounded-lg shadow-lg">
               <FormField
                 control={form.control}
                 name="eventName"
@@ -161,11 +169,11 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
                 name="optionalLink"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Optional Link (e.g., Zoom, Telegram)</FormLabel>
+                    <FormLabel>Main Event Link (e.g., Primary Zoom, Registration)</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://zoom.us/j/1234567890" {...field} />
+                      <Input placeholder="https://your-event-link.com" {...field} />
                     </FormControl>
-                    <FormDescription>If your event has an online component, add the link here.</FormDescription>
+                    <FormDescription>If your event has a primary online link, add it here.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -215,6 +223,19 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
                 />
               </div>
 
+              <h3 className="text-lg font-semibold font-headline text-foreground pt-4 border-t border-border">Social & Meeting Links (Optional)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField control={form.control} name="twitterLink" render={({ field }) => ( <FormItem> <FormLabel>Twitter</FormLabel> <FormControl><Input placeholder="https://twitter.com/yourprofile" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                <FormField control={form.control} name="linkedinLink" render={({ field }) => ( <FormItem> <FormLabel>LinkedIn</FormLabel> <FormControl><Input placeholder="https://linkedin.com/in/yourprofile" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                <FormField control={form.control} name="telegramLink" render={({ field }) => ( <FormItem> <FormLabel>Telegram</FormLabel> <FormControl><Input placeholder="https://t.me/yourgroup" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                <FormField control={form.control} name="whatsappLink" render={({ field }) => ( <FormItem> <FormLabel>WhatsApp</FormLabel> <FormControl><Input placeholder="https://wa.me/1234567890" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                <FormField control={form.control} name="googleMeetLink" render={({ field }) => ( <FormItem> <FormLabel>Google Meet</FormLabel> <FormControl><Input placeholder="https://meet.google.com/abc-defg-hij" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                <FormField control={form.control} name="zoomLink" render={({ field }) => ( <FormItem> <FormLabel>Zoom</FormLabel> <FormControl><Input placeholder="https://zoom.us/j/1234567890" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                <FormField control={form.control} name="twitchLink" render={({ field }) => ( <FormItem> <FormLabel>Twitch</FormLabel> <FormControl><Input placeholder="https://twitch.tv/yourchannel" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                <FormField control={form.control} name="youtubeLink" render={({ field }) => ( <FormItem> <FormLabel>YouTube</FormLabel> <FormControl><Input placeholder="https://youtube.com/yourchannel" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+              </div>
+
+
               <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
                 Save Details & Proceed
               </Button>
@@ -227,3 +248,5 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
 };
 
 export default CustomizeDetailsStep;
+
+    
