@@ -82,16 +82,7 @@ const CreateEventPage: NextPage = () => {
         {/* Page Header */}
         <header className="py-8 bg-card shadow-md relative overflow-hidden">
           <div className="container mx-auto px-4 md:px-6 text-center">
-            <div className="absolute inset-0 opacity-10 animate-fadeIn">
-              <Image
-                src="https://placehold.co/1200x300.png"
-                alt="Abstract invitation background"
-                layout="fill"
-                objectFit="cover"
-                className="pointer-events-none"
-                data-ai-hint="abstract invitation pattern"
-              />
-            </div>
+            {/* Removed Image component here */}
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary relative">
               Create Your Event Invite Now
             </h1>
