@@ -23,7 +23,7 @@ const eventDetailsSchema = z.object({
   eventTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Invalid time format (HH:MM)." }).default("19:00"),
   eventLocation: z.string().min(3, { message: "Location must be at least 3 characters." }).default("The Grand Hall"),
   eventDescription: z.string().min(10, { message: "Description must be at least 10 characters." }).max(500, {message: "Description must be 500 characters or less."}).default("Join us for a fantastic celebration!"),
-  optionalLink: z.string().url({ message: "Invalid URL." }).optional().or(z.literal('')),
+  optionalLink: z.string().url({ message: "Invalid URL." }).optional().or(z.literal('')).default(''),
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, { message: "Invalid hex color."}).default('#BE29FF'),
   fontStyle: z.string().default('Space Grotesk'),
 });
