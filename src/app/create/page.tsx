@@ -145,8 +145,8 @@ const CreateEventPage: NextPage = () => {
               No account needed—pay per event!
             </p>
             <div className="flex justify-center items-center space-x-4">
-              <Link href="/" legacyBehavior>
-                <a className="text-sm text-accent hover:underline">Back to Landing Page</a>
+              <Link href="/" className="text-sm text-accent hover:underline">
+                Back to Landing Page
               </Link>
               <a href="mailto:support@eventlink.com" className="text-sm flex items-center text-accent hover:underline">
                 <MessageSquare className="mr-1 h-4 w-4" /> Support
