@@ -125,16 +125,9 @@ const CreateEventPage: NextPage = () => {
               </Button>
             ) : <div />}
 
-            {currentStep === 2 && !eventDetails && (
-                 <Button
-                    variant="default"
-                    onClick={handleNextStep}
-                    disabled={currentStep === 1 ? !selectedTemplate : (currentStep === 2 ? !eventDetails : false) }
-                    className="bg-accent text-accent-foreground hover:bg-accent/90"
-                  >
-                   {currentStep === 1 && !selectedTemplate ? "Select a Template to Proceed" : "Next Step"}
-                 </Button>
-            )}
+            {/* The redundant "Next Step" button that was here for currentStep === 2 has been removed. */}
+            {/* Progression from Step 2 is handled by the submit button within CustomizeDetailsStep. */}
+            {/* Progression from Step 1 is handled by onTemplateSelect. */}
           </div>
         </main>
 
