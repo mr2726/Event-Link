@@ -11,7 +11,7 @@ import { ArrowLeft, MessageSquare } from 'lucide-react';
 import SelectTemplateStep from '@/components/create/SelectTemplateStep';
 import CustomizeDetailsStep, { type EventDetailsFormData } from '@/components/create/CustomizeDetailsStep';
 import ChoosePlanStep, { type Plan } from '@/components/create/ChoosePlanStep';
-import { Toaster } from '@/components/ui/toaster'; 
+import { Toaster } from '@/components/ui/toaster';
 
 export interface Template {
   id: string;
@@ -124,11 +124,11 @@ const CreateEventPage: NextPage = () => {
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
               </Button>
             ) : <div />}
-            
-            {currentStep < 3 && (currentStep === 1 ? !selectedTemplate : !eventDetails) && (
-                 <Button 
-                    variant="default" 
-                    onClick={handleNextStep} 
+
+            {currentStep === 2 && !eventDetails && (
+                 <Button
+                    variant="default"
+                    onClick={handleNextStep}
                     disabled={currentStep === 1 ? !selectedTemplate : (currentStep === 2 ? !eventDetails : false) }
                     className="bg-accent text-accent-foreground hover:bg-accent/90"
                   >
