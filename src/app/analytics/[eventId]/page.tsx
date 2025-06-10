@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Download, Loader2, BarChartHorizontalBig } from 'lucide-react';
+import { ArrowLeft, Download, Loader2, BarChartHorizontalBig, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface RsvpResponse {
@@ -21,12 +21,16 @@ interface RsvpResponse {
   submittedAt: Timestamp | null; 
 }
 
+interface FullEventData extends EventDetailsFormData {
+  visitCount?: number;
+}
+
 export default function AnalyticsPage() {
   const params = useParams();
   const eventId = params.eventId as string;
   const router = useRouter();
 
-  const [eventDetails, setEventDetails] = useState<EventDetailsFormData | null>(null);
+  const [eventDetails, setEventDetails] = useState<FullEventData | null>(null);
   const [responses, setResponses] = useState<RsvpResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +44,7 @@ export default function AnalyticsPage() {
 
     const fetchData = async () => {
       setLoading(true);
-      setError(null); // Reset error on new fetch
+      setError(null); 
       try {
         const eventDocRef = doc(db, "invites", eventId);
         const eventDocSnap = await getDoc(eventDocRef);
@@ -53,32 +57,29 @@ export default function AnalyticsPage() {
 
         const eventData = eventDocSnap.data();
         const currentEventDetails = eventData?.eventDetails as EventDetailsFormData;
-        setEventDetails(currentEventDetails);
+        const visitCount = eventData?.visitCount as number | undefined;
+        
+        setEventDetails({ ...currentEventDetails, visitCount });
         document.title = `Analytics for ${currentEventDetails?.eventName || 'Event'} - EventLink`;
 
-        if (!currentEventDetails?.enableRsvp) {
-          setError("RSVP and analytics were not enabled for this event.");
-          setLoading(false);
-          return;
-        }
-
-        const responsesColRef = collection(db, "invites", eventId, "responses");
-        const q = query(responsesColRef, orderBy("submittedAt", "desc"));
-        const responsesSnap = await getDocs(q);
-        
-        const fetchedResponses: RsvpResponse[] = [];
-        responsesSnap.forEach((docSnap) => {
-          const data = docSnap.data();
-          fetchedResponses.push({ 
-            id: docSnap.id, 
-            name: data.name,
-            email: data.email,
-            customAnswer: data.customAnswer,
-            submittedAt: data.submittedAt || null, 
+        if (currentEventDetails?.enableRsvp) {
+          const responsesColRef = collection(db, "invites", eventId, "responses");
+          const q = query(responsesColRef, orderBy("submittedAt", "desc"));
+          const responsesSnap = await getDocs(q);
+          
+          const fetchedResponses: RsvpResponse[] = [];
+          responsesSnap.forEach((docSnap) => {
+            const data = docSnap.data();
+            fetchedResponses.push({ 
+              id: docSnap.id, 
+              name: data.name,
+              email: data.email,
+              customAnswer: data.customAnswer,
+              submittedAt: data.submittedAt || null, 
+            });
           });
-        });
-        setResponses(fetchedResponses);
-
+          setResponses(fetchedResponses);
+        }
       } catch (e) {
         console.error("Error fetching analytics data:", e);
         setError("Failed to load analytics data. Please ensure you have the correct permissions and the event ID is valid.");
@@ -91,7 +92,7 @@ export default function AnalyticsPage() {
   }, [eventId]);
 
   const downloadCSV = () => {
-    if (!responses.length || !eventDetails) return;
+    if (!eventDetails?.enableRsvp || !responses.length) return;
 
     const headers = ["Name", "Email"];
     if (eventDetails.customRsvpQuestion) {
@@ -137,9 +138,8 @@ export default function AnalyticsPage() {
     );
   }
   
-  // Use a shared layout for error and actual content to keep consistent header/footer
-  const PageLayout: React.FC<{children: React.ReactNode, title?: string, description?: string, showBackButton?: boolean}> = 
-    ({children, title, description, showBackButton = true}) => (
+  const PageLayout: React.FC<{children: React.ReactNode, title?: string, description?: string, showBackButton?: boolean, showCsvButton?: boolean}> = 
+    ({children, title, description, showBackButton = true, showCsvButton = false }) => (
     <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
       <header className="max-w-5xl mx-auto mb-8 flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
@@ -151,7 +151,7 @@ export default function AnalyticsPage() {
           {title && <h1 className="text-2xl md:text-3xl font-bold text-primary mt-2">{title}</h1>}
           {description && <p className="text-muted-foreground">{description}</p>}
         </div>
-        {!error && responses.length > 0 && (
+        {showCsvButton && (
              <Button onClick={downloadCSV} variant="outline" className="border-accent text-accent hover:bg-accent/10 self-start md:self-center">
                 <Download className="mr-2 h-4 w-4" /> Download CSV
             </Button>
@@ -170,7 +170,7 @@ export default function AnalyticsPage() {
 
   if (error) {
      return (
-        <PageLayout title="Analytics Unavailable" showBackButton={!!eventId}>
+        <PageLayout title="Analytics Unavailable" showBackButton={!!eventId} showCsvButton={false}>
             <Card className="shadow-lg">
                 <CardHeader>
                     <CardTitle className="text-2xl text-destructive flex items-center">
@@ -193,52 +193,77 @@ export default function AnalyticsPage() {
       return null;
   }
 
+  const pageTitle = eventDetails.enableRsvp 
+    ? `${eventDetails.eventName} - RSVP Analytics` 
+    : `${eventDetails.eventName} - Visit Analytics`;
+  const pageDescription = eventDetails.enableRsvp 
+    ? "View responses submitted by your guests and total invite views." 
+    : "See how many times your invitation link has been viewed.";
+
   return (
     <PageLayout 
-        title={`${eventDetails.eventName} - RSVP Analytics`}
-        description="View responses submitted by your guests."
+        title={pageTitle}
+        description={pageDescription}
+        showCsvButton={!!(eventDetails.enableRsvp && responses.length > 0)}
     >
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center"><BarChartHorizontalBig className="mr-2 h-5 w-5 text-primary" /> Guest Responses ({responses.length})</CardTitle>
-            {eventDetails.customRsvpQuestion && <CardDescription>Your Custom Question: "{eventDetails.customRsvpQuestion}"</CardDescription>}
+             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                <CardTitle className="flex items-center">
+                    {eventDetails.enableRsvp ? <BarChartHorizontalBig className="mr-2 h-5 w-5 text-primary" /> : <Eye className="mr-2 h-5 w-5 text-primary" />}
+                    {eventDetails.enableRsvp ? `Guest Responses (${responses.length})` : 'Invitation Views'}
+                </CardTitle>
+                {eventDetails.visitCount !== undefined && (
+                    <p className="text-sm text-muted-foreground sm:text-right">
+                        Total Views: <span className="font-semibold text-accent">{eventDetails.visitCount}</span>
+                    </p>
+                )}
+            </div>
+            {eventDetails.enableRsvp && eventDetails.customRsvpQuestion && (
+                <CardDescription>Your Custom Question: "{eventDetails.customRsvpQuestion}"</CardDescription>
+            )}
           </CardHeader>
           <CardContent>
-            {responses.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[200px] min-w-[150px]">Name</TableHead>
-                      <TableHead className="w-[250px] min-w-[200px]">Email</TableHead>
-                      {eventDetails.customRsvpQuestion && (
-                        <TableHead className="min-w-[200px]">{eventDetails.customRsvpQuestion || 'Custom Answer'}</TableHead>
-                      )}
-                      <TableHead className="text-right w-[180px] min-w-[150px]">Submitted At</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {responses.map((response) => (
-                      <TableRow key={response.id}>
-                        <TableCell className="font-medium">{response.name}</TableCell>
-                        <TableCell>{response.email}</TableCell>
+            {eventDetails.enableRsvp ? (
+              responses.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[200px] min-w-[150px]">Name</TableHead>
+                        <TableHead className="w-[250px] min-w-[200px]">Email</TableHead>
                         {eventDetails.customRsvpQuestion && (
-                          <TableCell>{response.customAnswer || <span className="text-muted-foreground italic">No answer</span>}</TableCell>
+                          <TableHead className="min-w-[200px]">{eventDetails.customRsvpQuestion || 'Custom Answer'}</TableHead>
                         )}
-                        <TableCell className="text-right">
-                          {response.submittedAt ? format(response.submittedAt.toDate(), "MMM d, yyyy HH:mm") : <span className="text-muted-foreground italic">N/A</span>}
-                        </TableCell>
+                        <TableHead className="text-right w-[180px] min-w-[150px]">Submitted At</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {responses.map((response) => (
+                        <TableRow key={response.id}>
+                          <TableCell className="font-medium">{response.name}</TableCell>
+                          <TableCell>{response.email}</TableCell>
+                          {eventDetails.customRsvpQuestion && (
+                            <TableCell>{response.customAnswer || <span className="text-muted-foreground italic">No answer</span>}</TableCell>
+                          )}
+                          <TableCell className="text-right">
+                            {response.submittedAt ? format(response.submittedAt.toDate(), "MMM d, yyyy HH:mm") : <span className="text-muted-foreground italic">N/A</span>}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-8">No RSVP responses yet. Share your invite link to collect RSVPs!</p>
+              )
             ) : (
-              <p className="text-muted-foreground text-center py-8">No responses yet. Share your invite link to collect RSVPs!</p>
+              <p className="text-muted-foreground text-center py-8">RSVP data collection was not enabled for this event.</p>
             )}
           </CardContent>
         </Card>
     </PageLayout>
   );
 }
+
     

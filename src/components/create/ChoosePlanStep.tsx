@@ -83,8 +83,8 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
         },
         planId: currentPlan.id,
         planName: currentPlan.name,
-        planMaxVisits: currentPlan.maxVisits, // Save maxVisits
-        visitCount: 0, // Initialize visitCount
+        planMaxVisits: currentPlan.maxVisits, 
+        visitCount: 0, 
         createdAt: serverTimestamp(),
         eventId: eventId,
       };
@@ -93,9 +93,8 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
       const newGeneratedLink = `/invite/${eventId}`;
       setGeneratedLink(newGeneratedLink);
       
-      if (eventDetails.enableRsvp) {
-        setAnalyticsLink(`/analytics/${eventId}`);
-      }
+      // Always generate analytics link
+      setAnalyticsLink(`/analytics/${eventId}`);
       
       toast({
         title: "Link Generated & Saved!",
@@ -270,4 +269,6 @@ const ChoosePlanStep: React.FC<ChoosePlanStepProps> = ({ onPlanSelect, eventDeta
 };
 
 export default ChoosePlanStep;
+    
+
     
