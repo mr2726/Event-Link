@@ -17,6 +17,7 @@ import CorporateInvitePreview from './templates/CorporateInvitePreview';
 import MeetupInvitePreview from './templates/MeetupInvitePreview';
 import PartyInvitePreview from './templates/PartyInvitePreview';
 import ConferenceInvitePreview from './templates/ConferenceInvitePreview';
+import StreamInvitePreview from './templates/StreamInvitePreview'; // Import new template
 
 const eventDetailsSchema = z.object({
   eventName: z.string().min(3, { message: "Event name must be at least 3 characters." }).default("My Awesome Event"),
@@ -61,6 +62,8 @@ const renderSelectedTemplatePreview = (template: Template, formData: EventDetail
       return <div className={previewContainerClasses}><PartyInvitePreview template={template} formData={formData} /></div>;
     case 'conference':
       return <div className={previewContainerClasses}><ConferenceInvitePreview template={template} formData={formData} /></div>;
+    case 'stream': // Add case for new template
+      return <div className={previewContainerClasses}><StreamInvitePreview template={template} formData={formData} /></div>;
     default:
       return <div className="w-full aspect-[3/4] bg-muted flex items-center justify-center text-sm text-muted-foreground rounded-md border border-border">No preview available for this template.</div>;
   }
@@ -145,10 +148,11 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
                 name="eventLocation"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location</FormLabel>
+                    <FormLabel>Location / Platform</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., 123 Main St, Anytown, USA or Online" {...field} />
+                      <Input placeholder="e.g., 123 Main St, Anytown, USA or Online / YouTube Live" {...field} />
                     </FormControl>
+                    <FormDescription>For online events, mention the platform (e.g., Zoom, YouTube Live).</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -173,11 +177,11 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
                 name="optionalLink"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Main Event Link (e.g., Primary Zoom, Registration)</FormLabel>
+                    <FormLabel>Main Event Link (e.g., Stream Link, Zoom, Registration)</FormLabel>
                     <FormControl>
                       <Input placeholder="https://your-event-link.com" {...field} />
                     </FormControl>
-                    <FormDescription>If your event has a primary online link, add it here.</FormDescription>
+                    <FormDescription>If your event has a primary online link, add it here. This will be the main call-to-action.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -236,7 +240,7 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
                 <FormField control={form.control} name="googleMeetLink" render={({ field }) => ( <FormItem> <FormLabel>Google Meet</FormLabel> <FormControl><Input placeholder="https://meet.google.com/abc-defg-hij" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                 <FormField control={form.control} name="zoomLink" render={({ field }) => ( <FormItem> <FormLabel>Zoom</FormLabel> <FormControl><Input placeholder="https://zoom.us/j/1234567890" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                 <FormField control={form.control} name="twitchLink" render={({ field }) => ( <FormItem> <FormLabel>Twitch</FormLabel> <FormControl><Input placeholder="https://twitch.tv/yourchannel" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                <FormField control={form.control} name="youtubeLink" render={({ field }) => ( <FormItem> <FormLabel>YouTube</FormLabel> <FormControl><Input placeholder="https://youtube.com/yourchannel" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                <FormField control={form.control} name="youtubeLink" render={({ field }) => ( <FormItem> <FormLabel>YouTube Channel</FormLabel> <FormControl><Input placeholder="https://youtube.com/yourchannel" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
               </div>
 
               <h3 className="text-lg font-semibold font-headline text-foreground pt-4 border-t border-border">RSVP &amp; Guest Data Collection</h3>
@@ -253,10 +257,10 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel className="cursor-pointer">
-                          Enable RSVP &amp; Custom Question
+                          Enable Registration / RSVP
                         </FormLabel>
                         <FormDescription>
-                          Collect guest names, emails, and an answer to one custom question.
+                          Collect guest names, emails, and an answer to one custom question. Analytics page will be generated.
                         </FormDescription>
                       </div>
                     </FormItem>
@@ -270,9 +274,9 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
                       <FormItem>
                         <FormLabel>Custom Question for Guests (Optional)</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., Any dietary restrictions?" {...field} />
+                          <Input placeholder="e.g., Any dietary restrictions? or What topic are you most interested in?" {...field} />
                         </FormControl>
-                        <FormDescription>This question will be asked if RSVP is enabled. Keep it short (max 100 chars).</FormDescription>
+                        <FormDescription>This question will be asked if Registration/RSVP is enabled. Keep it short (max 100 chars).</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -292,4 +296,3 @@ const CustomizeDetailsStep: React.FC<CustomizeDetailsStepProps> = ({ template, o
 };
 
 export default CustomizeDetailsStep;
-    

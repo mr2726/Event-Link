@@ -11,6 +11,7 @@ import CorporateInvitePreview from '@/components/create/templates/CorporateInvit
 import MeetupInvitePreview from '@/components/create/templates/MeetupInvitePreview';
 import PartyInvitePreview from '@/components/create/templates/PartyInvitePreview';
 import ConferenceInvitePreview from '@/components/create/templates/ConferenceInvitePreview';
+import StreamInvitePreview from '@/components/create/templates/StreamInvitePreview'; // Import new template
 import type { EventDetailsFormData } from '@/components/create/CustomizeDetailsStep';
 import type { Template } from '@/app/create/page'; 
 import { Button } from '@/components/ui/button';
@@ -164,6 +165,8 @@ export default function InvitePage() {
         return <div className={containerClasses}><PartyInvitePreview template={dummyTemplate} formData={eventDetails} {...rsvpProps} isPublicInvitePage={true} /></div>;
       case 'conference':
         return <div className={containerClasses}><ConferenceInvitePreview template={dummyTemplate} formData={eventDetails} {...rsvpProps} isPublicInvitePage={true} /></div>;
+      case 'stream': // Add case for new template
+        return <div className={containerClasses}><StreamInvitePreview template={dummyTemplate} formData={eventDetails} {...rsvpProps} isPublicInvitePage={true} /></div>;
       default:
         return <p className="text-center text-destructive">Unknown template type. Cannot display invite.</p>;
     }
@@ -219,4 +222,3 @@ export default function InvitePage() {
     </div>
   );
 }
-    

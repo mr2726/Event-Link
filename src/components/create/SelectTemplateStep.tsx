@@ -13,6 +13,7 @@ import CorporateInvitePreview from './templates/CorporateInvitePreview';
 import MeetupInvitePreview from './templates/MeetupInvitePreview';
 import PartyInvitePreview from './templates/PartyInvitePreview';
 import ConferenceInvitePreview from './templates/ConferenceInvitePreview';
+import StreamInvitePreview from './templates/StreamInvitePreview'; // Import new template
 
 interface SelectTemplateStepProps {
   templates: Template[];
@@ -24,7 +25,6 @@ const renderTemplatePreviewOnCard = (template: Template) => {
 
   switch (template.id) {
     case 'wedding':
-      // formData is not passed here, component will use its defaults
       return <div className={previewContainerClasses}><WeddingInvitePreview template={template} /></div>;
     case 'corporate':
       return <div className={previewContainerClasses}><CorporateInvitePreview template={template} /></div>;
@@ -34,6 +34,8 @@ const renderTemplatePreviewOnCard = (template: Template) => {
       return <div className={previewContainerClasses}><PartyInvitePreview template={template} /></div>;
     case 'conference':
       return <div className={previewContainerClasses}><ConferenceInvitePreview template={template} /></div>;
+    case 'stream': // Add case for new template
+      return <div className={previewContainerClasses}><StreamInvitePreview template={template} /></div>;
     default:
       return (
         <Image

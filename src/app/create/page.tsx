@@ -27,6 +27,7 @@ const templates: Template[] = [
   { id: 'meetup', name: 'Casual Meetup', previewImageUrl: 'https://placehold.co/600x800.png', description: 'A friendly template for community meetups.', aiHint: 'meetup flyer casual' },
   { id: 'party', name: 'Birthday Bash', previewImageUrl: 'https://placehold.co/600x800.png', description: 'A fun and vibrant template for parties.', aiHint: 'birthday party fun' },
   { id: 'conference', name: 'Tech Conference', previewImageUrl: 'https://placehold.co/600x800.png', description: 'A sleek template for tech conferences.', aiHint: 'tech conference modern' },
+  { id: 'stream', name: 'Online Stream/Masterclass', previewImageUrl: 'https://placehold.co/600x800.png', description: 'A modern template for live streams and online masterclasses.', aiHint: 'live stream tech' },
 ];
 
 const CreateEventPage: NextPage = () => {
@@ -124,10 +125,6 @@ const CreateEventPage: NextPage = () => {
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
               </Button>
             ) : <div />}
-
-            {/* The redundant "Next Step" button that was here for currentStep === 2 has been removed. */}
-            {/* Progression from Step 2 is handled by the submit button within CustomizeDetailsStep. */}
-            {/* Progression from Step 1 is handled by onTemplateSelect. */}
           </div>
         </main>
 
